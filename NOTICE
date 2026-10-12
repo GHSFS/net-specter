@@ -1,0 +1,11 @@
+NetSpecter (net-specter)
+Copyright 2026 GHSFS (https://github.com/GHSFS)
+
+This product includes original zero-dependency PCAP/PCAPNG wire decoders,
+TLS ClientHello JA3/JA4 cryptographic fingerprinting engines, and DNS
+covert-channel entropy auditing routines developed by GHSFS.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+Any redistribution or derivative work in Source or Object form must retain
+this NOTICE file and the attribution to GHSFS pursuant to Section 4(d) of
+the Apache License, Version 2.0.

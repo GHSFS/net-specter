@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="540" viewBox="0 0 1200 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arcBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1120"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="540" rx="16" fill="url(#arcBg)"/>
+  <rect x="1" y="1" width="1198" height="538" rx="15" stroke="#334155" stroke-width="2"/>
+  <text x="600" y="48" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#f8fafc">
+    Architecture d’Inspection et d’Empreintes
+  </text>
+  <text x="600" y="76" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="400" fill="#94a3b8">
+    Forensique de Paquets Réseau, Empreintes TLS JA3/JA4 et Détecteur de Canaux Cachés en Rust Pur
+  </text>
+  <g transform="translate(600, 175)">
+    <rect x="-180" y="-48" width="360" height="96" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+    <text x="0" y="-14" text-anchor="middle" font-family="sans-serif" font-size="11.5" font-weight="700" fill="#818cf8" letter-spacing="1.5">CORE PACKET DISPATCHER</text>
+    <text x="0" y="12" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="800" fill="#ffffff">nspecter CLI &amp; Library</text>
+    <text x="0" y="34" text-anchor="middle" font-family="sans-serif" font-size="11.5" font-weight="500" fill="#cbd5e1">inspect-pcap · ja3 · dns-audit · synth-pcap</text>
+  </g>
+  <g transform="translate(215, 145)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#0ea5e9" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#38bdf8">01 · Décodeur PCAP</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">src/pcap.rs</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">Analyse Little/Big-Endian usec/nsec et trames Ethernet/VLAN/IPv4/IPv6/TCP/UDP</text>
+  </g>
+  <g transform="translate(985, 145)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#c084fc">04 · Auditeur de Tunnels DNS</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">src/dns.rs</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">Protection anti-boucle RFC 1035 (&lt;=32 sauts) et entropie de Shannon</text>
+  </g>
+  <g transform="translate(215, 390)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#34d399">02 · Inspecteur TLS ClientHello</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">src/tls_ja3.rs</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">Extraction de SNI, ALPN, courbes elliptiques et versions supportées</text>
+  </g>
+  <g transform="translate(600, 415)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#fbbf24">03 · Empreintes Cryptographiques JA3</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">MD5 + SHA-256</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">Filtrage GREASE RFC 8701 et calcul des condensats MD5 et SHA-256</text>
+  </g>
+  <g transform="translate(985, 390)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#ec4899" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#f472b6">05 · Synthèse PCAP Déterministe</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">synth-pcap &amp; --json</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">Génération de captures PCAP de test et sortie JSON structurée</text>
+  </g>
+  <g stroke="#475569" stroke-width="2" stroke-dasharray="4 4">
+    <path d="M 390 145 L 420 175"/>
+    <path d="M 810 145 L 780 175"/>
+    <path d="M 390 390 L 460 223"/>
+    <path d="M 600 365 L 600 223"/>
+    <path d="M 810 390 L 740 223"/>
+  </g>
+</svg>
