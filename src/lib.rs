@@ -3,11 +3,14 @@
 // Copyright 2026 GHSFS. See the NOTICE file for attribution details.
 
 //! `net-specter` (`nspecter`) — Zero-dependency network packet forensics,
-//! PCAP frame decoder, TLS ClientHello JA3 fingerprinting engine, and DNS
+//! PCAP/PCAPNG frame decoder, TLS ClientHello JA3 fingerprinting engine, and DNS
 //! covert-channel anomaly detector.
+
+#![forbid(unsafe_code)]
 
 pub mod cli;
 pub mod dns;
 pub mod error;
 pub mod pcap;
+pub mod pcapng;
 pub mod tls_ja3;

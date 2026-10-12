@@ -44,10 +44,13 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
-    /// Generate a deterministic multi-packet sample .pcap containing TLS 1.3 ClientHello and DNS packets
+    /// Generate a deterministic multi-packet sample .pcap or .pcapng containing TLS 1.3 ClientHello and DNS packets
     SynthPcap {
-        /// Output path for the generated .pcap file
+        /// Output path for the generated capture file (.pcap or .pcapng)
         output: PathBuf,
+        /// Generate next-generation PCAPNG capture instead of classic PCAP
+        #[arg(long)]
+        pcapng: bool,
         /// Emit structured JSON summary
         #[arg(long)]
         json: bool,

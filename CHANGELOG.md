@@ -2,6 +2,19 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.2.0] - 2026-10-13
+
+### Added
+- **PCAPNG Next-Generation Capture Format & Multi-Interface Block Parser (`src/pcapng.rs`)**:
+  - Implemented Section Header Block (`0x0A0D0D0A` SHB) parser with Byte Order Magic detection for both little-endian (`0x4D3C2E1A`) and big-endian architectures, decoding hardware, OS, and user application metadata.
+  - Implemented Interface Description Block (`0x00000001` IDB) parser supporting link types, snap lengths, interface names, descriptions, and arbitrary timestamp resolution (`if_tsresol`).
+  - Implemented Enhanced Packet Block (`0x00000006` EPB) and Simple Packet Block (`0x00000003` SPB) frame decoders with nanosecond timestamp reconstruction and automatic alignment padding.
+  - Added TLV block option parser with bounds verification and memory exhaustion limits.
+  - Added deterministic multi-packet PCAPNG capture generation (`nspecter synth-pcap <output> --pcapng`).
+- **CLI & Forensics Pipeline Integration**:
+  - Enabled automatic capture format detection (`is_pcapng`) across `inspect-pcap`, `ja3`, and `dns-audit` subcommands, inspecting flows, TLS handshakes, and DNS messages from PCAPNG captures transparently.
+  - Added dedicated integration test suite (`tests/pcapng_test.rs`) covering synthetic capture decoding, nanosecond timestamp accuracy, graceful unknown block skipping, and malformed header rejection.
+
 ## [0.1.0] - 2026-10-13
 
 ### Added

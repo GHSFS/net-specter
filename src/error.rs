@@ -10,6 +10,7 @@ use std::fmt;
 pub enum SpecterError {
     Io(std::io::Error),
     InvalidPcap(String),
+    InvalidPcapng(String),
     InvalidPacket(String),
     MalformedTls(String),
     MalformedDns(String),
@@ -21,6 +22,7 @@ impl fmt::Display for SpecterError {
         match self {
             Self::Io(err) => write!(f, "I/O error: {err}"),
             Self::InvalidPcap(msg) => write!(f, "Invalid PCAP capture: {msg}"),
+            Self::InvalidPcapng(msg) => write!(f, "Invalid PCAPNG capture: {msg}"),
             Self::InvalidPacket(msg) => write!(f, "Invalid network frame: {msg}"),
             Self::MalformedTls(msg) => write!(f, "Malformed TLS record: {msg}"),
             Self::MalformedDns(msg) => write!(f, "Malformed DNS message: {msg}"),

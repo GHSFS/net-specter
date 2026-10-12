@@ -1,0 +1,34 @@
+# Build and binary targets
+/target/
+**/*.rs.bk
+*.exe
+*.pdb
+*.dll
+*.so
+*.dylib
+
+# Temporary and local capture files
+*.pcap
+*.pcapng
+*.tmp
+*.log
+*.bak
+*.swp
+*~
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and Editor directories
+.idea/
+.vscode/
+*.iml
+
+# Node / script artifacts
+node_modules/
+npm-debug.log*
+
+# Internal development logs
+/dev_logs/

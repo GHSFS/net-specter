@@ -7,13 +7,13 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 ## Shipped Capabilities
 
 - [x] **Core PCAP Capture Decoder, TLS `ClientHello` JA3 Fingerprinting & DNS Covert Tunneling Auditor (`v0.1.0`)** — Zero-dependency libpcap `.pcap` L2/L3/L4 frame decoder (Ethernet II, 802.1Q VLAN, Raw IP, IPv4/IPv6, TCP/UDP), RFC 8701 GREASE-filtered TLS `ClientHello` JA3 (MD5 + SHA-256) extractor with SNI/ALPN inspection, RFC 1035 DNS wire parser with pointer loop protection and Shannon entropy covert-channel scoring, and deterministic `.pcap` synthesis (`nspecter inspect-pcap`, `ja3`, `dns-audit`, `synth-pcap`).
+- [x] **PCAPNG Next-Generation Capture Format & Multi-Interface Block Parser (`v0.2.0`)** — Native parsing of PCAPNG Section Header Blocks (`0x0A0D0D0A`), Interface Description Blocks, Enhanced Packet Blocks, and Simple Packet Blocks with nanosecond resolution, TLV options, and seamless CLI integration (`nspecter synth-pcap --pcapng`, `nspecter inspect-pcap`).
 
 ---
 
 ## Planned Milestones
 
 ### Capture Formats & Transport Reassembly
-- [ ] **PCAPNG Next-Generation Capture Block Parser (`src/pcapng.rs`)** — Parse Section Header Blocks (`0x0A0D0D0A`), Interface Description Blocks, and Enhanced Packet Blocks with interface metadata and nanosecond timestamp resolution.
 - [ ] **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstruct bidirectional TCP byte streams across fragmented and out-of-order segments, tracking sequence numbers, retransmissions, and window scaling.
 - [ ] **BPF-Style Packet Filter Expression Engine (`src/filter.rs`)** — Filter captures by IP CIDR, port ranges, transport protocol, TCP flag masks, and payload byte signatures (`--filter "tcp port 443 and syn"`).
 - [ ] **IPv6 Extension Header & Fragmentation Chain Inspector (`src/ipv6_ext.rs`)** — Walk Hop-by-Hop, Routing, Fragment, and encapsulating security headers to detect evasion and overlapping fragment anomalies.

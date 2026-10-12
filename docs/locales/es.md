@@ -28,10 +28,10 @@
 
 net-specter (nspecter) es una herramienta CLI y biblioteca en Rust puro para el análisis forense de capturas de red, extracción de huellas TLS JA3 y detección de túneles encubiertos en DNS sin dependencias externas en C.
 
-1. **Zero-Dependency PCAP Capture Engine (`src/pcap.rs`)** — Decodes classic libpcap `.pcap` files across both little-endian and big-endian microsecond/nanosecond headers (`0xA1B2C3D4`, `0xA1B23C4D`), Ethernet II frames (with IEEE 802.1Q VLAN tag unwrapping), Raw IP captures (`linktype 101`), IPv4/IPv6 headers, and TCP/UDP transport segments.
+1. **Zero-Dependency PCAP & PCAPNG Capture Engine (`src/pcap.rs` & `src/pcapng.rs`)** — Decodes classic libpcap `.pcap` files across both little-endian and big-endian microsecond/nanosecond headers (`0xA1B2C3D4`, `0xA1B23C4D`), Ethernet II frames (with IEEE 802.1Q VLAN tag unwrapping), Raw IP captures (`linktype 101`), IPv4/IPv6 headers, and TCP/UDP transport segments, as well as next-generation `.pcapng` Section Header Blocks (`0x0A0D0D0A`), Interface Description Blocks, Enhanced Packet Blocks, and Simple Packet Blocks with arbitrary timestamp resolution.
 2. **TLS `ClientHello` Deep Inspector & JA3 Engine (`src/tls_ja3.rs`)** — Parses TLS Handshake (`0x16`) `ClientHello` (`0x01`) records, extracts SNI hostnames (`0x0000`), Supported Groups (`0x000a`), EC Point Formats (`0x000b`), ALPN protocols (`0x0010`), and Supported Versions (`0x002b`), filters RFC 8701 GREASE values (`0x?a?a`), and computes both **JA3 MD5** and **SHA-256** fingerprints.
 3. **DNS Wire-Format Parser & Covert Tunneling Auditor (`src/dns.rs`)** — Decodes RFC 1035 DNS packets with strict compression pointer loop protection (`<= 32` hops) and scores subdomain Shannon entropy, label lengths, and hexadecimal/Base32 payload density to flag covert C2 or data exfiltration channels (`Low`, `Elevated`, `High`).
-4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
+4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` and `.pcapng` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
 
 </details>
 
@@ -69,18 +69,19 @@ net-specter (nspecter) es una herramienta CLI y biblioteca en Rust puro para el 
 # 1. Build the release binary
 cargo build --release
 
-# 2. Generate a deterministic sample .pcap capture (TLS 1.3 ClientHello + DNS packets)
+# 2. Generate a deterministic sample .pcap or .pcapng capture (TLS 1.3 ClientHello + DNS packets)
 ./target/release/nspecter synth-pcap sample.pcap
+./target/release/nspecter synth-pcap sample.pcapng --pcapng
 
-# 3. Inspect all L2/L3/L4 flows, TLS JA3 handshakes, and DNS queries in a capture
+# 3. Inspect all flows, TLS JA3 handshakes, and DNS queries in a capture (.pcap or .pcapng)
 ./target/release/nspecter inspect-pcap sample.pcap
-./target/release/nspecter inspect-pcap sample.pcap --json
+./target/release/nspecter inspect-pcap sample.pcapng --json
 
-# 4. Extract TLS ClientHello details and JA3 MD5 / SHA-256 digests from a .pcap or hex string
-./target/release/nspecter ja3 sample.pcap --json
+# 4. Extract TLS ClientHello details and JA3 MD5 / SHA-256 digests from a capture or hex string
+./target/release/nspecter ja3 sample.pcapng --json
 
 # 5. Audit DNS packets for high-entropy covert tunneling / C2 exfiltration
-./target/release/nspecter dns-audit sample.pcap --json
+./target/release/nspecter dns-audit sample.pcapng --json
 ```
 
 </details>
@@ -108,14 +109,16 @@ net-specter/
 │   ├── cli.rs                     # Clap subcommand definitions
 │   ├── error.rs                   # Unified SpecterError & Result<T>
 │   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
+│   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
+    ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
     └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
 ```
 
-See [ROADMAP.md](../../ROADMAP.md) for planned PCAPNG, JA4/JA4S, QUIC Initial decryption, and TCP stream reassembly capabilities.
+See [ROADMAP.md](../../ROADMAP.md) for planned JA4/JA4S, QUIC Initial decryption, and TCP stream reassembly capabilities.
 
 </details>
 

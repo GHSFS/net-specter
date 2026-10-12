@@ -420,11 +420,11 @@ fn wrap_ipv4_ethernet(src_ip: [u8; 4], dst_ip: [u8; 4], proto: u8, l4_bytes: &[u
     frame
 }
 
-/// Generates a deterministic multi-packet `.pcap` capture containing:
+/// Generates the standard test frames containing:
 /// 1. A TCP TLS 1.3 `ClientHello` handshake packet to `api.telemetry.example.org:443`.
 /// 2. A benign UDP DNS `A` query for `api.telemetry.example.org`.
 /// 3. A suspicious high-entropy UDP DNS `TXT` query exhibiting covert tunneling traits.
-pub fn build_synthetic_pcap() -> Vec<u8> {
+pub fn synthetic_test_packets() -> Vec<Vec<u8>> {
     let tls_payload = build_sample_client_hello("api.telemetry.example.org");
     let mut tcp_seg = Vec::with_capacity(20 + tls_payload.len());
     tcp_seg.extend_from_slice(&51422u16.to_be_bytes()); // src port
@@ -459,7 +459,15 @@ pub fn build_synthetic_pcap() -> Vec<u8> {
     udp2.extend_from_slice(&dns_covert);
     let pkt3 = wrap_ipv4_ethernet([10, 0, 0, 15], [8, 8, 4, 4], 17, &udp2);
 
-    let packets = [pkt1, pkt2, pkt3];
+    vec![pkt1, pkt2, pkt3]
+}
+
+/// Generates a deterministic multi-packet `.pcap` capture containing:
+/// 1. A TCP TLS 1.3 `ClientHello` handshake packet to `api.telemetry.example.org:443`.
+/// 2. A benign UDP DNS `A` query for `api.telemetry.example.org`.
+/// 3. A suspicious high-entropy UDP DNS `TXT` query exhibiting covert tunneling traits.
+pub fn build_synthetic_pcap() -> Vec<u8> {
+    let packets = synthetic_test_packets();
     let mut pcap = Vec::with_capacity(512);
     pcap.extend_from_slice(&PCAP_MAGIC_USEC_LE.to_le_bytes());
     pcap.extend_from_slice(&2u16.to_le_bytes());
