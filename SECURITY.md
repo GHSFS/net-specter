@@ -15,6 +15,7 @@ Security updates are applied to the latest release series on the `main` branch.
 2. **Strict Bounds & Pointer Hop Protection**: Untrusted network captures enforce explicit slice length bounds and RFC 1035 DNS compression pointer hop limits (`<= 32` hops) to prevent infinite decompression loops and out-of-bounds reads.
 3. **Ephemeral Buffer Hygiene**: Sensitive session identifiers, TLS random values, and extracted payload buffers implement `zeroize` wiping on drop where applicable.
 4. **Deterministic Resource Limits**: Capture readers reject malformed packet headers whose captured length (`incl_len`) exceeds snaplen or remaining file capacity, preventing allocation exhaustion attacks.
+5. **Bounded Out-of-Order TCP Stream Buffering**: Stateful TCP reassembly enforces strict per-stream memory buffer limits (`DEFAULT_MAX_OUT_OF_ORDER_BUFFER`) to prevent denial-of-service memory exhaustion when processing adversarial sparse-sequence packet floods.
 
 ## Reporting a Vulnerability
 

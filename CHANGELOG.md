@@ -2,6 +2,24 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.4.0] - 2026-10-13
+
+### Added
+- **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)**:
+  - Implemented bidirectional TCP stream reassembly and state tracking (SYN, FIN, RST, sequence numbers) across client and server directions.
+  - Added RFC 793 sequence arithmetic modulo $2^{32}$ handling 32-bit sequence wrap-around without data loss.
+  - Implemented out-of-order segment buffering with deterministic gap draining and overlapping retransmission deduplication.
+  - Added bounded memory management per stream (`DEFAULT_MAX_OUT_OF_ORDER_BUFFER`) to prevent denial-of-service memory exhaustion from fragmented or sparse segment floods.
+  - Integrated zeroize memory hygiene on reassembled stream buffers upon teardown.
+- **Application-Layer Inspection over Reassembled Streams**:
+  - Transparently decodes fragmented multi-segment TLS `ClientHello` handshakes and extracts JA3 (MD5/SHA-256) and JA4 client fingerprints across TCP segment boundaries.
+  - Detects HTTP/1.1 request/response flows, HTTP/2 connection prefaces, and SSH protocol banners from reassembled byte streams.
+- **CLI Subcommand Integration (`nspecter tcp-stream`)**:
+  - Added `nspecter tcp-stream <file> [--dump-payload] [--json]` supporting both classic `.pcap` and next-generation `.pcapng` capture formats.
+  - Emits per-stream metrics (packet counts, retransmitted bytes, out-of-order counts, handshake status, duration) and optional hexadecimal payload dumps.
+- **Dedicated Integration Test Suite (`tests/tcp_stream_test.rs`)**:
+  - Added 8 comprehensive integration tests covering in-order HTTP flows, out-of-order gap draining, overlapping retransmissions, multi-segment fragmented TLS ClientHello inspection, 32-bit sequence wrap-around, buffer memory limit protections, and CLI command execution.
+
 ## [0.3.0] - 2026-10-13
 
 ### Added

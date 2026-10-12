@@ -33,6 +33,7 @@ net-specter (nspecter) — это быстрый и безопасный к па
 3. **DNS Wire-Format Parser & Covert Tunneling Auditor (`src/dns.rs`)** — Decodes RFC 1035 DNS packets with strict compression pointer loop protection (`<= 32` hops) and scores subdomain Shannon entropy, label lengths, and hexadecimal/Base32 payload density to flag covert C2 or data exfiltration channels (`Low`, `Elevated`, `High`).
 4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` and `.pcapng` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
 5. **JA4 & JA4S Modern TLS / QUIC Fingerprinting Engine (`src/ja4.rs`)** — Computes FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC, and DTLS transports.
+6. **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstructs bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, DoS memory limits, and multi-segment application protocol inspection (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
 
 </details>
 
@@ -86,6 +87,9 @@ cargo build --release
 
 # 6. Audit DNS packets for high-entropy covert tunneling / C2 exfiltration
 ./target/release/nspecter dns-audit sample.pcapng --json
+
+# 7. Reassemble bidirectional TCP streams and inspect application payloads
+./target/release/nspecter tcp-stream sample.pcapng --json
 ```
 
 </details>
@@ -116,15 +120,17 @@ net-specter/
 │   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
 │   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
+│   ├── tcp_stream.rs              # Stateful TCP stream reassembly & out-of-order tracker
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
     ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
     ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
+    ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
     └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
 ```
 
-See [ROADMAP.md](../../ROADMAP.md) for planned JA4/JA4S, QUIC Initial decryption, and TCP stream reassembly capabilities.
+See [ROADMAP.md](../../ROADMAP.md) for planned transport and protocol forensics capabilities.
 
 </details>
 
@@ -138,7 +144,8 @@ See [ROADMAP.md](../../ROADMAP.md) for planned JA4/JA4S, QUIC Initial decryption
 
 - **100% Safe Rust**: Zero `unsafe` blocks across all binary frame decoders.
 - **RFC 1035 Compression Loop Defense**: DNS name decompression enforces a strict 32-hop pointer ceiling and forward/self-pointer rejection.
-- **Transient Buffer Zeroization**: Ephemeral TLS random and session ID byte buffers are wiped on drop via `zeroize`.
+- **Transient Buffer Zeroization**: Ephemeral TLS random, session ID, and reassembly byte buffers are wiped on drop via `zeroize`.
+- **DoS-Resistant Segment Buffering**: Out-of-order TCP segment queuing enforces bounded per-stream memory quotas to prevent memory exhaustion from fragmented segment floods.
 - **Policy & Vulnerability Reporting**: Refer to [SECURITY.md](../../SECURITY.md).
 
 </details>

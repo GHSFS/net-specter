@@ -55,6 +55,17 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Reassemble bidirectional TCP byte streams from a PCAP/PCAPNG capture and inspect application payloads
+    TcpStream {
+        /// Path to the input .pcap or .pcapng file
+        file: PathBuf,
+        /// Dump reassembled client/server payloads in hexadecimal format
+        #[arg(long)]
+        dump_payload: bool,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
     /// Generate a deterministic multi-packet sample .pcap or .pcapng containing TLS 1.3 ClientHello and DNS packets
     SynthPcap {
         /// Output path for the generated capture file (.pcap or .pcapng)

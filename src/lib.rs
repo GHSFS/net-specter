@@ -14,4 +14,5 @@ pub mod error;
 pub mod ja4;
 pub mod pcap;
 pub mod pcapng;
+pub mod tcp_stream;
 pub mod tls_ja3;
