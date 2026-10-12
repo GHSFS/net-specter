@@ -36,6 +36,17 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Extract TLS and QUIC ClientHello/ServerHello metadata and compute JA4 / JA4S fingerprints
+    Ja4 {
+        /// Path to a .pcap/.pcapng file, raw binary file, or hex-encoded TLS/QUIC record
+        file_or_hex: String,
+        /// Force QUIC ('q') transport classification
+        #[arg(long)]
+        quic: bool,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
     /// Parse DNS wire packets from a .pcap or hex string and score covert-tunneling entropy anomalies
     DnsAudit {
         /// Path to a .pcap file, raw binary file, or hex-encoded DNS message

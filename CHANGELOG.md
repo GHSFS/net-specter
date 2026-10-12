@@ -2,6 +2,23 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.3.0] - 2026-10-13
+
+### Added
+- **JA4 & JA4S Modern TLS & QUIC Fingerprint Engine (`src/ja4.rs`)**:
+  - Implemented FoxIO-compatible sorted JA4 client fingerprinting (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprinting (`t1302h2_1301_<ext_hash>`).
+  - Added support for TCP (`t`), QUIC (`q`), and DTLS (`d`) transport protocols with RFC 8701 GREASE filtering (`0x?a?a`) across cipher suites, extensions, supported versions, and signature algorithms, with RFC 6347 DTLS 13-byte record and 12-byte handshake fragment parsing.
+  - Implemented QUIC Initial packet inspection with RFC 9000 variable-length integer parsing and unencrypted/CRYPTO frame extraction over UDP.
+  - Added zeroize memory hygiene to automatically scrub transient TLS/DTLS random bytes, session ID buffers, and handshake cookies on drop.
+  - Implemented PCAP/PCAPNG capture bytes extraction (`extract_ja4_from_capture_bytes`) for offline batch fingerprinting.
+- **CLI Subcommand Integration (`nspecter ja4`)**:
+  - Added `nspecter ja4 <file_or_hex> [--quic] [--json]` supporting `.pcap`, `.pcapng`, or raw hexadecimal TLS ClientHello/ServerHello payloads.
+  - Structured output provides human-readable formatted summary or full JSON telemetry for SIEM and threat intelligence correlation.
+- **Comprehensive Integration Test Suite (`tests/ja4_test.rs`)**:
+  - Validated JA4 client and JA4S server fingerprint calculation and GREASE immunity.
+  - Verified SNI IP (`i`) versus domain (`d`) classification and ALPN edge cases (e.g., `h2`, `00`).
+  - Tested QUIC Initial packet decoding, DTLS record header and cookie/epoch handling, malformed/truncated record rejection, PCAP/PCAPNG capture extraction, and CLI execution.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added

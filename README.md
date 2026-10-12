@@ -1,9 +1,9 @@
 <div align="center">
 
-**🇺🇸 English** · [🇰🇷 한국어](./docs/locales/ko.md) · [🇨🇳 中文](./docs/locales/zh-CN.md) · [🇪🇸 Español](./docs/locales/es.md) · [🇮🇳 हिन्दी](./docs/locales/hi.md) · [🇸🇦 العربية](./docs/locales/ar.md) · [🇧🇷 Português](./docs/locales/pt-BR.md) · [🇷🇺 Русский](./docs/locales/ru.md) · [🇫🇷 Français](./docs/locales/fr.md) · [🇮🇩 Bahasa Indonesia](./docs/locales/id.md)
-
-</div>
-<br>
+<p align="center">
+  <strong>🇺🇸 English</strong> · <a href="./docs/locales/ko.md">🇰🇷 한국어</a> · <a href="./docs/locales/zh-CN.md">🇨🇳 中文</a> · <a href="./docs/locales/es.md">🇪🇸 Español</a> · <a href="./docs/locales/hi.md">🇮🇳 हिन्दी</a><br />
+  <a href="./docs/locales/ar.md">🇸🇦 العربية</a> · <a href="./docs/locales/pt-BR.md">🇧🇷 Português</a> · <a href="./docs/locales/ru.md">🇷🇺 Русский</a> · <a href="./docs/locales/fr.md">🇫🇷 Français</a> · <a href="./docs/locales/id.md">🇮🇩 Bahasa Indonesia</a>
+</p>
 
 <p align="center">
   <img src="./docs/assets/locales/en/banner.svg" alt="NetSpecter (nspecter) banner" width="100%" />
@@ -32,6 +32,7 @@ net-specter (nspecter) is a fast, memory-safe command-line utility and Rust libr
 2. **TLS `ClientHello` Deep Inspector & JA3 Engine (`src/tls_ja3.rs`)** — Parses TLS Handshake (`0x16`) `ClientHello` (`0x01`) records, extracts SNI hostnames (`0x0000`), Supported Groups (`0x000a`), EC Point Formats (`0x000b`), ALPN protocols (`0x0010`), and Supported Versions (`0x002b`), filters RFC 8701 GREASE values (`0x?a?a`), and computes both **JA3 MD5** and **SHA-256** fingerprints.
 3. **DNS Wire-Format Parser & Covert Tunneling Auditor (`src/dns.rs`)** — Decodes RFC 1035 DNS packets with strict compression pointer loop protection (`<= 32` hops) and scores subdomain Shannon entropy, label lengths, and hexadecimal/Base32 payload density to flag covert C2 or data exfiltration channels (`Low`, `Elevated`, `High`).
 4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` and `.pcapng` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
+5. **JA4 & JA4S Modern TLS / QUIC Fingerprinting Engine (`src/ja4.rs`)** — Computes FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC, and DTLS transports.
 
 </details>
 
@@ -80,7 +81,10 @@ cargo build --release
 # 4. Extract TLS ClientHello details and JA3 MD5 / SHA-256 digests from a capture or hex string
 ./target/release/nspecter ja3 sample.pcapng --json
 
-# 5. Audit DNS packets for high-entropy covert tunneling / C2 exfiltration
+# 5. Extract FoxIO JA4 client and JA4S server fingerprints from a capture or hex string
+./target/release/nspecter ja4 sample.pcapng --json
+
+# 6. Audit DNS packets for high-entropy covert tunneling / C2 exfiltration
 ./target/release/nspecter dns-audit sample.pcapng --json
 ```
 
@@ -111,10 +115,12 @@ net-specter/
 │   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
 │   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
+│   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
     ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
+    ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
     └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
 ```
 
