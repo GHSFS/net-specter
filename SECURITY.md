@@ -17,6 +17,7 @@ Security updates are applied to the latest release series on the `main` branch.
 4. **Deterministic Resource Limits**: Capture readers reject malformed packet headers whose captured length (`incl_len`) exceeds snaplen or remaining file capacity, preventing allocation exhaustion attacks.
 5. **Bounded Out-of-Order TCP Stream Buffering**: Stateful TCP reassembly enforces strict per-stream memory buffer limits (`DEFAULT_MAX_OUT_OF_ORDER_BUFFER`) to prevent denial-of-service memory exhaustion when processing adversarial sparse-sequence packet floods.
 6. **Constant-Time Cryptographic Verification & Secret Buffer Wiping**: QUIC Initial decryption enforces constant-time comparison of AEAD authentication tags, strict 16-byte sample bounds checking for header protection, and automatic `zeroize` wiping on drop for all derived symmetric keys, IVs, and decrypted payload buffers.
+7. **Safe Statistical Aggregation & Flow Tracking**: C2 beacon jitter and spectrogram analysis enforce minimum flow event thresholds and bounded binning intervals, with zero-division safeguards against timestamp collisions and zero-variance distributions.
 
 ## Reporting a Vulnerability
 

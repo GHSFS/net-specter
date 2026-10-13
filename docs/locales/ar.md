@@ -36,6 +36,8 @@
 6. **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstructs bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, DoS memory limits, and multi-segment application protocol inspection (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
 7. **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Fingerprinting (`src/http_inspect.rs`)** — Parses HTTP/1.1 requests and responses, decodes HTTP/2 connection prefaces, binary frame streams, and `SETTINGS` parameters, and computes FoxIO-compliant `JA4H` client fingerprints (`nspecter http-audit`).
 8. **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`src/tls_cert.rs`)** — Extracts JA3S server response fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decodes TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) messages, provides a zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity timestamps, DNS/IP SANs, serial numbers, signature algorithms), and flags certificate anomalies (expired, not yet valid, inverted validity, weak signature algorithms, self-signed) across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit`).
+9. **QUIC Initial Packet & RFC 9001 Decryptor (`src/quic.rs`, `src/quic_crypto.rs`)** — Derives initial keys via HKDF-SHA256, unmasks RFC 9001 header protection, decrypts QUIC Initial packets with pure Rust AES-128-GCM, reassembles CRYPTO frames, and extracts TLS 1.3 JA3/JA4 fingerprints over UDP/443 (`nspecter quic-audit`).
+10. **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)** — Analyzes flow inter-arrival deltas ($Delta t$), mean/variance/median jitter, coefficient of variation ($CV$), interval frequency spectrograms, and periodicity scores to classify automated C2 heartbeats (`HighConfidenceBeacon`, `JitteredBeacon`, `SuspectInterval`, `Benign`) across PCAP and PCAPNG captures (`nspecter beacon-audit`).
 
 </details>
 
@@ -98,6 +100,12 @@ cargo build --release
 
 # 9. Forensically audit TLS ServerHello JA3S fingerprints and X.509 certificate chains
 ./target/release/nspecter cert-audit capture.pcap --json
+
+# 10. Decrypt QUIC Initial packets and extract TLS 1.3 JA3/JA4 fingerprints
+./target/release/nspecter quic-audit capture.pcap --json
+
+# 11. Audit C2 beacon jitter and periodic interval spectrograms
+./target/release/nspecter beacon-audit capture.pcap --min-events 4 --json
 ```
 
 </details>
@@ -124,8 +132,11 @@ net-specter/
 │   ├── main.rs                    # CLI entrypoint & output formatter
 │   ├── cli.rs                     # Clap subcommand definitions
 │   ├── error.rs                   # Unified SpecterError & Result<T>
+│   ├── beacon.rs                  # C2 beacon jitter & interval spectrogram detector
 │   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
 │   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
+│   ├── quic.rs                    # QUIC Initial packet & CRYPTO stream extractor
+│   ├── quic_crypto.rs             # Pure Rust HKDF-SHA256, AES-128 & GCM decryptor
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
 │   ├── tls_cert.rs                # TLS ServerHello JA3S, TLS 1.2/1.3 Certs & X.509 ASN.1 parser
 │   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
@@ -133,9 +144,11 @@ net-specter/
 │   ├── http_inspect.rs            # HTTP/1.1, HTTP/2 SETTINGS frame & JA4H fingerprint engine
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
+    ├── beacon_test.rs             # C2 beacon jitter, spectrogram & classification tests
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
     ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
     ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
+    ├── quic_test.rs               # RFC 9001 HKDF, AES-GCM & QUIC Initial decrypt tests
     ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
     ├── http_inspect_test.rs       # HTTP/1.1, HTTP/2 frames & JA4H integration tests
     ├── tls_cert_test.rs           # ServerHello JA3S, X.509 ASN.1 DER & anomaly integration tests

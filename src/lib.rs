@@ -8,6 +8,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod beacon;
 pub mod cli;
 pub mod dns;
 pub mod error;
