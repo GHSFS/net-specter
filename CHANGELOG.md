@@ -2,6 +2,20 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.8.0] - 2026-10-13
+
+### Added
+- **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)**:
+  - Implemented 5-tuple flow grouping across IPv4/IPv6 TCP and UDP frames extracted from PCAP and PCAPNG captures.
+  - Computed flow inter-arrival deltas ($\Delta t = t_{i+1} - t_i$), arithmetic mean, median, sample variance, standard deviation, and coefficient of variation ($CV$ / jitter %).
+  - Constructed interval frequency spectrograms with automatic binning, identifying dominant heartbeat intervals, fundamental frequencies ($f = 1/\tau$), and peak power energy ratios.
+  - Calculated periodicity and regularity scores evaluating closeness to median, delta clustering, and coefficient of variation.
+  - Implemented automated verdict classification: `HighConfidenceBeacon` (strict periodic heartbeats, $\le 8\%$ jitter), `JitteredBeacon` ($\le 45\%$ jitter), `SuspectInterval` ($\le 70\%$ jitter), and `Benign` (bursty/irregular traffic or insufficient events).
+- **CLI Subcommand (`nspecter beacon-audit`)**:
+  - Added `nspecter beacon-audit <file> [--min-events <n>] [--threshold <val>] [--json]` supporting `.pcap` and `.pcapng` capture files with formatted tabular and JSON outputs.
+- **Integration Test Suite (`tests/beacon_test.rs`)**:
+  - Added 7 integration tests covering statistical deltas, spectrogram binning, beacon classification verdicts, multi-flow synthetic PCAP and PCAPNG captures, adversarial and empty buffer handling, and CLI execution.
+
 ## [0.7.0] - 2026-10-13
 
 ### Added

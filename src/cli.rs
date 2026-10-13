@@ -101,4 +101,18 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Analyze flow inter-arrival times and detect periodic or jittered C2 beaconing
+    BeaconAudit {
+        /// Path to the input .pcap or .pcapng file
+        file: PathBuf,
+        /// Minimum packet events in a flow required for beacon audit
+        #[arg(long, default_value_t = 4)]
+        min_events: usize,
+        /// Periodicity/regularity score threshold for classification
+        #[arg(long, default_value_t = 0.70)]
+        threshold: f64,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
 }
