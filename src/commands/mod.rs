@@ -10,6 +10,7 @@ pub mod dns;
 pub mod filter;
 pub mod hassh;
 pub mod http;
+pub mod icmp;
 pub mod inspect;
 pub mod quic;
 pub mod synth;
@@ -71,5 +72,10 @@ pub fn execute(command: Commands) -> Result<()> {
             self::filter::handle_filter(&file, &filter, json)
         }
         Commands::Hassh { file_or_hex, json } => hassh::handle_hassh(&file_or_hex, json),
+        Commands::IcmpTunnel {
+            file_or_hex,
+            dump_payload,
+            json,
+        } => icmp::handle_icmp_tunnel(&file_or_hex, dump_payload, json),
     }
 }

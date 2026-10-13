@@ -16,6 +16,7 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [x] **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`v0.8.0`)** — Analyze flow inter-arrival timestamps ($\Delta t$), mean/variance/median jitter, coefficient of variation ($CV$), interval frequency spectrograms, and periodicity scores across PCAP/PCAPNG captures to detect automated C2 heartbeats and covert beaconing (`nspecter beacon-audit <file> [--json]`).
 - [x] **BPF-Style Packet Filter Expression Engine (`v0.9.0`)** — Recursive-descent AST evaluator supporting IPv4/IPv6 CIDR matching, port and port-range filters, protocol tests, TCP flag masks, packet length comparisons, and boolean combinators across PCAP and PCAPNG captures (`nspecter filter <file> <expr> [--json]`, `inspect-pcap --filter`).
 - [x] **SSH HASSH Client & Server Key-Exchange Fingerprinting (`v0.10.0`)** — Zero-dependency RFC 4253 SSH banner parser and `SSH_MSG_KEXINIT` (Type 20) decoder with packet header extraction and all 10 algorithm name-lists; computes Salesforce `HASSH` (client) and `HASSHServer` (server) raw strings, MD5 fingerprints, and SHA-256 extended digests across PCAP, PCAPNG, and raw byte streams (`nspecter hassh <file_or_hex> [--json]`).
+- [x] **ICMP Echo Payload & Timing Covert Tunnel Detector (`v0.11.0`)** — Decode ICMPv4 (RFC 792) and ICMPv6 (RFC 4443) Echo Request and Reply frames, verify 8-byte minimum header bounds, calculate Shannon entropy, recognize standard OS ping signatures (Windows 32-byte, Linux 56-byte timeval), flag Echo Request/Reply payload divergence (RFC violation/tampering), sequence gaps, and plaintext shell command exfiltration (`nspecter icmp-tunnel <file> [--json] [--dump-payload]`).
 
 ---
 
@@ -32,7 +33,7 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [ ] **SNI Proxy & Transparent TLS Downgrade Detector (`src/sni_proxy.rs`)** — Detect mismatched SNI vs HTTP Host headers, TLS fallback signaling (`TLS_FALLBACK_SCSV`), and transparent proxy MITM anomalies.
 
 ### Covert Channel & Threat Hunting Analytics
-- [ ] **ICMP Echo Payload & Timing Covert Tunnel Detector (`src/icmp_tunnel.rs`)** — Audit ICMP Echo Request/Reply payloads for non-standard byte patterns, asymmetric sizes, and high-entropy data exfiltration.
+- [ ] **OpenVPN Data Channel & HMAC Authenticator (`src/openvpn_audit.rs`)** — Decode OpenVPN `P_DATA` opcodes, key IDs, and verify HMAC authentication tags across UDP/TCP tunnels.
 - [ ] **DNS-over-HTTPS (DoH) & DNS-over-TLS (DoT) Traffic Profiler (`src/doh_dot.rs`)** — Profile port 853 DoT sessions and identify wire-format DNS queries tunneled inside HTTP/2 / HTTP/3 DoH streams.
 - [ ] **SMB2/3 & DCE/RPC Lateral Movement Inspector (`src/smb.rs`)** — Decode SMB2 negotiation headers, tree connects (`IPC$`, `ADMIN$`, `C$`), and named pipe RPC bindings indicative of lateral movement.
 - [ ] **ARP Spoofing & Layer-2 MITM Anomaly Detector (`src/arp_audit.rs`)** — Detect gratuitous ARP storms, duplicate IP-to-MAC bindings, and gateway MAC flapping inside Ethernet captures.

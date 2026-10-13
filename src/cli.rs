@@ -136,4 +136,15 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Audit ICMP Echo Request/Reply flows for covert data exfiltration, tunnels, and payload tampering
+    IcmpTunnel {
+        /// Path to a .pcap/.pcapng file, raw packet dump, or hex-encoded ICMP frame
+        file_or_hex: String,
+        /// Dump payload preview of suspicious or covert frames
+        #[arg(long)]
+        dump_payload: bool,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
 }

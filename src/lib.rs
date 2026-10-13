@@ -15,6 +15,7 @@ pub mod dns;
 pub mod error;
 pub mod filter;
 pub mod http_inspect;
+pub mod icmp_tunnel;
 pub mod ja4;
 pub mod pcap;
 pub mod pcapng;

@@ -2,6 +2,22 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.11.0] - 2026-10-13
+
+### Added
+- **ICMP Echo Payload & Timing Covert Tunnel Detector (`src/icmp_tunnel.rs`)**:
+  - Implemented zero-dependency parser for ICMPv4 (RFC 792) and ICMPv6 (RFC 4443) Echo Request (`Type 8` / `Type 128`) and Echo Reply (`Type 0` / `Type 129`) messages with strict 8-byte minimum header length validation.
+  - Added Shannon entropy calculation ($H = -\sum p_i \log_2 p_i$) across ICMP payload bytes to flag compressed, encrypted, or covert tunnel payloads ($\ge 5.5$ bits/byte).
+  - Added pattern classification recognizing standard OS ping payloads: Windows 32-byte repeating alphabet (`abcdefghijklmnopqrstuvwabcdefghi`), Linux 56-byte `struct timeval` timestamp plus sequential byte pattern (`0x10`..`0x37`), and all-zero or repeating fill buffers.
+  - Implemented conversation-level symmetry verification tracking paired Echo Requests and Echo Replies: flags payload length and byte content divergence violating RFC 792/4443 standards indicative of active tunnel multiplexing or covert bidirectional channels.
+  - Added signature detection for command strings and exfiltration markers (`cmd.exe`, `powershell`, `/bin/sh`, `/bin/bash`, `whoami`, `cat /etc`, `GET `, `POST `, `HTTP/`, `SSH-`, `BEGIN RSA`, `ptun`).
+  - Added sequence continuity analysis flagging sequence number gaps, duplicates, and out-of-order deliveries.
+  - Added deterministic multi-flow synthetic PCAP generator (`build_synthetic_icmp_pcap`) modeling benign Windows/Linux ping sessions, covert high-entropy tunnels, and plaintext command exfiltration.
+- **CLI Subcommand (`src/commands/icmp.rs` & `nspecter icmp-tunnel`)**:
+  - Added `nspecter icmp-tunnel <file_or_hex> [--dump-payload] [--json]` supporting PCAP, PCAPNG, and raw packet captures with conversation summaries, threat indicators, and payload previews.
+- **Integration Test Suite (`tests/icmp_tunnel_test.rs`)**:
+  - Added 6 integration tests covering Shannon entropy calculation, OS payload pattern recognition, synthetic PCAP multi-flow auditing (clean vs covert tunnel), ICMPv6 echo parsing, truncated/corrupted packet bounds rejection, and CLI execution.
+
 ## [0.10.0] - 2026-10-13
 
 ### Added
