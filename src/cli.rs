@@ -24,6 +24,9 @@ pub enum Commands {
     InspectPcap {
         /// Path to the input .pcap file
         file: PathBuf,
+        /// BPF-style packet filter expression (e.g. "tcp port 443", "src net 192.168.0.0/16")
+        #[arg(long, short = 'f')]
+        filter: Option<String>,
         /// Emit structured JSON output
         #[arg(long)]
         json: bool,
@@ -111,6 +114,16 @@ pub enum Commands {
         /// Periodicity/regularity score threshold for classification
         #[arg(long, default_value_t = 0.70)]
         threshold: f64,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
+    /// Filter packets in a PCAP/PCAPNG capture using BPF-style expressions
+    Filter {
+        /// Path to the input .pcap or .pcapng file
+        file: PathBuf,
+        /// BPF-style packet filter expression (e.g. "tcp port 443", "src net 10.0.0.0/8 and syn")
+        filter: String,
         /// Emit structured JSON output
         #[arg(long)]
         json: bool,
