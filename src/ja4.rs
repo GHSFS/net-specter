@@ -460,6 +460,27 @@ pub fn parse_ja4(p: &[u8], tr: Option<TransportProtocol>) -> Result<Ja4Fingerpri
             compute_ja4_client(b, TransportProtocol::Quic).map(Ja4Fingerprint::Client)
         };
     }
+    if is_quic_packet(p) {
+        if let Ok(rep) = crate::quic::audit_quic_packet(p) {
+            if rep.ja4.is_some() {
+                if let Ok((_, _, dec)) = crate::quic::decrypt_quic_initial_packet(p, false) {
+                    if let Ok(crypto) = crate::quic::parse_crypto_frames(&dec) {
+                        if let Ok(client) = compute_ja4_client(&crypto, TransportProtocol::Quic) {
+                            return Ok(Ja4Fingerprint::Client(client));
+                        }
+                    }
+                }
+            } else if rep.ja4s.is_some() {
+                if let Ok((_, _, dec)) = crate::quic::decrypt_quic_initial_packet(p, true) {
+                    if let Ok(crypto) = crate::quic::parse_crypto_frames(&dec) {
+                        if let Ok(server) = compute_ja4_server(&crypto, TransportProtocol::Quic) {
+                            return Ok(Ja4Fingerprint::Server(server));
+                        }
+                    }
+                }
+            }
+        }
+    }
     compute_ja4_client(p, tr)
         .map(Ja4Fingerprint::Client)
         .or_else(|_| compute_ja4_server(p, tr).map(Ja4Fingerprint::Server))

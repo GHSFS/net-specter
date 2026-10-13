@@ -12,6 +12,7 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [x] **TCP Stream Reassembly & Out-of-Order Segment Tracker (`v0.4.0`)** — Reconstruct bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, buffer memory DoS limits, and multi-segment TLS ClientHello (JA3/JA4) and HTTP inspection (`nspecter tcp-stream <file> [--dump-payload] [--json]`).
 - [x] **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Header Fingerprinting (`v0.5.0`)** — Parse HTTP/1.1 request and response headers, cookies, referer, and body previews, decode RFC 7540 HTTP/2 connection prefaces, frame streams (`DATA`, `HEADERS`, `SETTINGS`, `WINDOW_UPDATE`, `PING`, `GOAWAY`), and `SETTINGS` parameters, and compute FoxIO-compliant `JA4H` client fingerprints across PCAP, PCAPNG, and raw streams (`nspecter http-audit <file_or_hex> [--json]`).
 - [x] **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`v0.6.0`)** — Extract JA3S server fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decode TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) handshake messages, zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity windows, DNS/IP SANs, serial numbers, signature algorithms), and anomaly detection for expired, not yet valid, inverted validity, weak signature algorithms, and self-signed certificates across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit <file_or_hex> [--json]`).
+- [x] **QUIC Initial Packet & RFC 9001 Header Protection Decryptor (`v0.7.0`)** — Derive initial keys from RFC 9001 / RFC 9369 version salts and Destination Connection ID (`DCID`) using HKDF-SHA256, pure Rust AES-128 block cipher and AES-128-GCM authenticated decryption with $GF(2^{128})$ GHASH, strip header protection, reassemble CRYPTO frame byte streams, and extract TLS 1.3 ClientHello JA3 (MD5/SHA-256) and FoxIO JA4 / JA4S fingerprints over UDP/443 (`nspecter quic-audit <file_or_hex> [--json]`).
 
 ---
 
@@ -23,10 +24,10 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [ ] **PCAP Sanitizer & PII Anonymizer (`src/anonymize.rs`)** — Prefix-preserving IPv4/IPv6 address pseudonymization, MAC scrubbing, and payload truncation for safe capture sharing (`nspecter scrub`).
 
 ### Cryptographic Protocol Fingerprinting
-- [ ] **QUIC Initial Packet & RFC 9001 Header Protection Decryptor (`src/quic.rs`)** — Derive initial secrets from the QUIC version salt and Destination Connection ID (`DCID`) using HKDF-SHA256 to remove header protection and inspect embedded TLS 1.3 `ClientHello` frames over UDP/443.
 - [ ] **Encrypted Client Hello (ECH / ESNI) & DoH Bootstrap Detector (`src/ech.rs`)** — Identify TLS `encrypted_client_hello` (`0xfe0d`) extensions and DNS `HTTPS`/`SVCB` (`TYPE65`) bootstrap records.
 - [ ] **SSH Hassh Client & Server Key-Exchange Fingerprinting (`src/ssh_hassh.rs`)** — Parse `SSH_MSG_KEXINIT` packets and compute `HASSH` / `HASSHServer` MD5 and SHA-256 algorithm negotiation fingerprints.
 - [ ] **TCP SYN Passive OS Fingerprinting (`src/p0f.rs`)** — Fingerprint client operating systems from initial TTL, TCP window size, MSS, SACK permitted, and TCP option ordering (`JA4T`).
+- [ ] **TLS 1.3 Key Log (`SSLKEYLOGFILE`) Session Decryptor (`src/tls_decrypt.rs`)** — Parse NSS key log files to decrypt captured TLS sessions for offline deep inspection.
 
 ### Covert Channel & Threat Hunting Analytics
 - [ ] **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)** — Analyze inter-arrival timestamp deltas ($\Delta t$), coefficient of variation, and discrete Fourier periodicity across flow pairs to detect automated command-and-control heartbeats.

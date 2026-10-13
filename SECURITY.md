@@ -16,6 +16,7 @@ Security updates are applied to the latest release series on the `main` branch.
 3. **Ephemeral Buffer Hygiene**: Sensitive session identifiers, TLS random values, and extracted payload buffers implement `zeroize` wiping on drop where applicable.
 4. **Deterministic Resource Limits**: Capture readers reject malformed packet headers whose captured length (`incl_len`) exceeds snaplen or remaining file capacity, preventing allocation exhaustion attacks.
 5. **Bounded Out-of-Order TCP Stream Buffering**: Stateful TCP reassembly enforces strict per-stream memory buffer limits (`DEFAULT_MAX_OUT_OF_ORDER_BUFFER`) to prevent denial-of-service memory exhaustion when processing adversarial sparse-sequence packet floods.
+6. **Constant-Time Cryptographic Verification & Secret Buffer Wiping**: QUIC Initial decryption enforces constant-time comparison of AEAD authentication tags, strict 16-byte sample bounds checking for header protection, and automatic `zeroize` wiping on drop for all derived symmetric keys, IVs, and decrypted payload buffers.
 
 ## Reporting a Vulnerability
 

@@ -82,6 +82,14 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Decrypt QUIC Initial packets, strip RFC 9001 header protection, and extract TLS 1.3 ClientHello JA3/JA4 fingerprints
+    QuicAudit {
+        /// Path to a .pcap/.pcapng file, raw binary file, or hex-encoded QUIC Initial packet
+        file_or_hex: String,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
     /// Generate a deterministic multi-packet sample .pcap or .pcapng containing TLS 1.3 ClientHello and DNS packets
     SynthPcap {
         /// Output path for the generated capture file (.pcap or .pcapng)

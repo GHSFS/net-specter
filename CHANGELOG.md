@@ -2,6 +2,26 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.7.0] - 2026-10-13
+
+### Added
+- **QUIC Initial Packet & RFC 9001 Header Protection Decryptor (`src/quic.rs`, `src/quic_crypto.rs`)**:
+  - Implemented RFC 9001 key schedule derivation using HKDF-SHA256 from the Initial Salt and Destination Connection ID (`DCID`).
+  - Added support for QUIC v1 (`0x00000001`), QUIC v2 (`0x6b3343cf`, RFC 9369), and draft-29 (`0xff00001d`) initial salt constants.
+  - Implemented pure Rust AES-128 block cipher (NIST FIPS 197) for header protection sampling and mask unmasking.
+  - Implemented pure Rust AES-128-GCM authenticated decryption (NIST SP 800-38D) with $GF(2^{128})$ GHASH and constant-time authentication tag validation.
+  - Added zeroize memory wiping for all intermediate cryptographic keys, initialization vectors, and decrypted buffers on drop.
+- **QUIC Frame & CRYPTO Stream Reassembly**:
+  - Parsed QUIC variable-length integers (RFC 9000 Section 16) and frame sequences across PADDING, PING, ACK, and CRYPTO frames.
+  - Reassembled fragmented or ordered CRYPTO chunks by stream offset.
+  - Extracted embedded TLS 1.3 `ClientHello` and `ServerHello` handshake messages.
+  - Computed full JA3 strings, MD5 fingerprints, SHA-256 digests, and FoxIO `JA4` / `JA4S` fingerprints (`q13d...`, `q1301...`) over QUIC UDP transport.
+- **Capture File Auditing & CLI Integration**:
+  - Added `audit_quic_bytes` and `audit_quic_capture_bytes` scanning classic `.pcap` and `.pcapng` capture files for UDP port 443 QUIC Initial packets.
+  - Added CLI subcommand `nspecter quic-audit <file_or_hex> [--json]`.
+- **Integration Test Suite (`tests/quic_test.rs`)**:
+  - Added 8 integration tests covering RFC 9001 Appendix A HKDF key derivation test vectors, NIST SP 800-38D GCM test vectors, synthetic Client Initial and Server Initial packet decryption, QUIC v2 packet handling, PCAP/PCAPNG capture extraction, adversarial truncated/corrupted packet rejection, and CLI execution.
+
 ## [0.6.0] - 2026-10-13
 
 ### Added

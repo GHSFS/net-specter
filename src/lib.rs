@@ -15,6 +15,8 @@ pub mod http_inspect;
 pub mod ja4;
 pub mod pcap;
 pub mod pcapng;
+pub mod quic;
+pub mod quic_crypto;
 pub mod tcp_stream;
 pub mod tls_cert;
 pub mod tls_ja3;
