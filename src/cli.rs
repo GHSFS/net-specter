@@ -66,6 +66,14 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Parse HTTP/1.1 requests/responses, HTTP/2 frames & SETTINGS, and compute JA4H client fingerprints
+    HttpAudit {
+        /// Path to a .pcap/.pcapng file, raw HTTP payload file, or hex-encoded message
+        file_or_hex: String,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
     /// Generate a deterministic multi-packet sample .pcap or .pcapng containing TLS 1.3 ClientHello and DNS packets
     SynthPcap {
         /// Output path for the generated capture file (.pcap or .pcapng)

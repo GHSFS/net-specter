@@ -2,6 +2,22 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.5.0] - 2026-10-13
+
+### Added
+- **HTTP/1.1 & HTTP/2 Frame Inspector (`src/http_inspect.rs`)**:
+  - Parses HTTP/1.1 client requests (method, URI, version, headers, cookies, `Referer`, and body previews) and server responses (version, status code, reason phrase, `Set-Cookie`, headers, and body previews).
+  - Decodes RFC 7540 / RFC 9113 HTTP/2 connection prefaces (`PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n`) and 9-byte binary frame headers across `DATA`, `HEADERS`, `PRIORITY`, `RST_STREAM`, `SETTINGS`, `PUSH_PROMISE`, `PING`, `GOAWAY`, `WINDOW_UPDATE`, and `CONTINUATION` frame types.
+  - Extracts and validates HTTP/2 `SETTINGS` parameters (`HEADER_TABLE_SIZE`, `ENABLE_PUSH`, `MAX_CONCURRENT_STREAMS`, `INITIAL_WINDOW_SIZE`, `MAX_FRAME_SIZE`, `MAX_HEADER_LIST_SIZE`, `ENABLE_CONNECT_PROTOCOL`) with strict stream-ID and frame-length verification.
+  - Wipes transient request/response buffers on drop via `zeroize`.
+- **FoxIO JA4H HTTP Client Fingerprinting Engine**:
+  - Computes 4-segment `JA4H` client fingerprints (`<method><version><cookie><referer><header_count><lang>_<headers_hash>_<cookie_names_hash>_<cookie_values_hash>`) and raw `ja4h_r` representations.
+  - Filters HTTP/2 pseudo-headers (`:method`, `:path`, `:authority`, `:scheme`), normalizes `Accept-Language` tags, and sorts cookie key-value pairs alphabetically for cookie-order invariance.
+- **CLI Subcommand (`nspecter http-audit`)**:
+  - Added `nspecter http-audit <file_or_hex> [--json]` supporting classic `.pcap`, next-generation `.pcapng` (via automatic TCP stream reassembly), raw HTTP files, and hex-encoded payloads.
+- **Integration Test Suite (`tests/http_inspect_test.rs`)**:
+  - Added 6 integration tests covering HTTP/1.1 request/response parsing, JA4H fingerprint calculation and cookie-order invariance, HTTP/2 preface and `SETTINGS` frame decoding, PCAP/PCAPNG capture extraction, malformed frame rejection, and CLI `--json` execution.
+
 ## [0.4.0] - 2026-10-13
 
 ### Added

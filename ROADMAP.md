@@ -10,6 +10,7 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [x] **PCAPNG Next-Generation Capture Format & Multi-Interface Block Parser (`v0.2.0`)** — Native parsing of PCAPNG Section Header Blocks (`0x0A0D0D0A`), Interface Description Blocks, Enhanced Packet Blocks, and Simple Packet Blocks with nanosecond resolution, TLV options, and seamless CLI integration (`nspecter synth-pcap --pcapng`, `nspecter inspect-pcap`).
 - [x] **JA4 & JA4S Modern TLS / QUIC Client & Server Fingerprinting Engine (`v0.3.0`)** — Compute FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC Initial, and DTLS transports with zeroize hygiene (`nspecter ja4 <file_or_hex> [--json]`).
 - [x] **TCP Stream Reassembly & Out-of-Order Segment Tracker (`v0.4.0`)** — Reconstruct bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, buffer memory DoS limits, and multi-segment TLS ClientHello (JA3/JA4) and HTTP inspection (`nspecter tcp-stream <file> [--dump-payload] [--json]`).
+- [x] **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Header Fingerprinting (`v0.5.0`)** — Parse HTTP/1.1 request and response headers, cookies, referer, and body previews, decode RFC 7540 HTTP/2 connection prefaces, frame streams (`DATA`, `HEADERS`, `SETTINGS`, `WINDOW_UPDATE`, `PING`, `GOAWAY`), and `SETTINGS` parameters, and compute FoxIO-compliant `JA4H` client fingerprints across PCAP, PCAPNG, and raw streams (`nspecter http-audit <file_or_hex> [--json]`).
 
 ---
 
@@ -29,7 +30,6 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 
 ### Covert Channel & Threat Hunting Analytics
 - [ ] **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)** — Analyze inter-arrival timestamp deltas ($\Delta t$), coefficient of variation, and discrete Fourier periodicity across flow pairs to detect automated command-and-control heartbeats.
-- [ ] **HTTP/1.1 & HTTP/2 Frame Inspector (`src/http_inspect.rs`)** — Parse HTTP request/response headers, HTTP/2 preface and `SETTINGS` frames (`JA4H`), and suspect user-agent or header ordering anomalies.
 - [ ] **ICMP Echo Payload & Timing Covert Tunnel Detector (`src/icmp_tunnel.rs`)** — Audit ICMP Echo Request/Reply payloads for non-standard byte patterns, asymmetric sizes, and high-entropy data exfiltration.
 - [ ] **SMB2/3 & DCE/RPC Lateral Movement Inspector (`src/smb.rs`)** — Decode SMB2 negotiation headers, tree connects (`IPC$`, `ADMIN$`, `C$`), and named pipe RPC bindings indicative of lateral movement.
 - [ ] **ARP Spoofing & Layer-2 MITM Anomaly Detector (`src/arp_audit.rs`)** — Detect gratuitous ARP storms, duplicate IP-to-MAC bindings, and gateway MAC flapping inside Ethernet captures.

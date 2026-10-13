@@ -8,6 +8,7 @@ use clap::Parser;
 use net_specter::cli::{Cli, Commands};
 use net_specter::dns::parse_dns_packet;
 use net_specter::error::{Result, SpecterError};
+use net_specter::http_inspect::audit_http_bytes;
 use net_specter::ja4::{extract_ja4_from_capture_bytes, Ja4Fingerprint};
 use net_specter::pcap::{build_synthetic_pcap, parse_pcap_bytes};
 use net_specter::pcapng::{build_synthetic_pcapng, is_pcapng, parse_pcapng_bytes};
@@ -370,6 +371,52 @@ fn run() -> Result<()> {
                             server_hex.len()
                         );
                     }
+                }
+            }
+        }
+        Commands::HttpAudit { file_or_hex, json } => {
+            let bytes = load_bytes_or_hex(&file_or_hex)?;
+            let report = audit_http_bytes(&bytes)?;
+            if json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&report)
+                        .map_err(|e| SpecterError::InvalidArgument(e.to_string()))?
+                );
+            } else {
+                println!(
+                    "HTTP Audit Summary: {} message(s) | HTTP/1.1 Requests={} | Responses={} | HTTP/2 Connections={}",
+                    report.total_messages,
+                    report.http1_requests.len(),
+                    report.http1_responses.len(),
+                    report.http2_connections.len()
+                );
+                for req in &report.http1_requests {
+                    println!(
+                        "  [HTTP/1.1 REQ] {} {} {} | headers={} | JA4H={}",
+                        req.method,
+                        req.uri,
+                        req.version,
+                        req.headers.len(),
+                        req.ja4h.ja4h
+                    );
+                }
+                for resp in &report.http1_responses {
+                    println!(
+                        "  [HTTP/1.1 RESP] {} {} {} | headers={}",
+                        resp.version,
+                        resp.status_code,
+                        resp.reason,
+                        resp.headers.len()
+                    );
+                }
+                for h2 in &report.http2_connections {
+                    println!(
+                        "  [HTTP/2] preface={} | frames={} | settings={}",
+                        h2.preface_valid,
+                        h2.frames.len(),
+                        h2.settings.len()
+                    );
                 }
             }
         }

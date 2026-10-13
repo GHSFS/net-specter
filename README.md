@@ -34,6 +34,7 @@ net-specter (nspecter) is a fast, memory-safe command-line utility and Rust libr
 4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` and `.pcapng` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
 5. **JA4 & JA4S Modern TLS / QUIC Fingerprinting Engine (`src/ja4.rs`)** — Computes FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC, and DTLS transports.
 6. **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstructs bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, DoS memory limits, and multi-segment application protocol inspection (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
+7. **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Fingerprinting (`src/http_inspect.rs`)** — Parses HTTP/1.1 requests and responses, decodes HTTP/2 connection prefaces, binary frame streams, and `SETTINGS` parameters, and computes FoxIO-compliant `JA4H` client fingerprints (`nspecter http-audit`).
 
 </details>
 
@@ -90,6 +91,9 @@ cargo build --release
 
 # 7. Reassemble bidirectional TCP streams and inspect application payloads
 ./target/release/nspecter tcp-stream sample.pcapng --json
+
+# 8. Inspect HTTP/1.1 & HTTP/2 frames and compute JA4H HTTP client fingerprints
+./target/release/nspecter http-audit capture.pcap --json
 ```
 
 </details>
@@ -121,12 +125,14 @@ net-specter/
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
 │   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
 │   ├── tcp_stream.rs              # Stateful TCP stream reassembly & out-of-order tracker
+│   ├── http_inspect.rs            # HTTP/1.1, HTTP/2 SETTINGS frame & JA4H fingerprint engine
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
     ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
     ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
     ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
+    ├── http_inspect_test.rs       # HTTP/1.1, HTTP/2 frames & JA4H integration tests
     └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
 ```
 

@@ -4,7 +4,7 @@
 
 [package]
 name = "net-specter"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 rust-version = "1.75"
 description = "Zero-dependency network packet forensics, PCAP/PCAPNG analyzer, TLS JA3/JA4 fingerprinting engine, and covert channel detector in pure Rust."

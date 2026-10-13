@@ -11,6 +11,7 @@
 pub mod cli;
 pub mod dns;
 pub mod error;
+pub mod http_inspect;
 pub mod ja4;
 pub mod pcap;
 pub mod pcapng;
