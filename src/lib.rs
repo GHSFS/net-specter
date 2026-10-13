@@ -10,6 +10,7 @@
 
 pub mod beacon;
 pub mod cli;
+pub mod commands;
 pub mod dns;
 pub mod error;
 pub mod filter;
@@ -19,6 +20,7 @@ pub mod pcap;
 pub mod pcapng;
 pub mod quic;
 pub mod quic_crypto;
+pub mod ssh_hassh;
 pub mod tcp_stream;
 pub mod tls_cert;
 pub mod tls_ja3;

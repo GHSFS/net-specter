@@ -128,4 +128,12 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Extract SSH-2.0 banners and SSH_MSG_KEXINIT metadata, compute Salesforce HASSH/HASSHServer fingerprints
+    Hassh {
+        /// Path to a .pcap/.pcapng file, raw binary SSH packet file, or hex-encoded message
+        file_or_hex: String,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
 }

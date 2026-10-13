@@ -18,6 +18,7 @@ pub enum SpecterError {
     MalformedCert(String),
     MalformedQuic(String),
     InvalidFilter(String),
+    MalformedSsh(String),
     InvalidArgument(String),
 }
 
@@ -34,6 +35,7 @@ impl fmt::Display for SpecterError {
             Self::MalformedCert(msg) => write!(f, "Malformed X.509 certificate: {msg}"),
             Self::MalformedQuic(msg) => write!(f, "Malformed QUIC packet: {msg}"),
             Self::InvalidFilter(msg) => write!(f, "Invalid packet filter: {msg}"),
+            Self::MalformedSsh(msg) => write!(f, "Malformed SSH packet: {msg}"),
             Self::InvalidArgument(msg) => write!(f, "Invalid argument: {msg}"),
         }
     }

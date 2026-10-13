@@ -14,19 +14,19 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [x] **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`v0.6.0`)** — Extract JA3S server fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decode TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) handshake messages, zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity windows, DNS/IP SANs, serial numbers, signature algorithms), and anomaly detection for expired, not yet valid, inverted validity, weak signature algorithms, and self-signed certificates across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit <file_or_hex> [--json]`).
 - [x] **QUIC Initial Packet & RFC 9001 Header Protection Decryptor (`v0.7.0`)** — Derive initial keys from RFC 9001 / RFC 9369 version salts and Destination Connection ID (`DCID`) using HKDF-SHA256, pure Rust AES-128 block cipher and AES-128-GCM authenticated decryption with $GF(2^{128})$ GHASH, strip header protection, reassemble CRYPTO frame byte streams, and extract TLS 1.3 ClientHello JA3 (MD5/SHA-256) and FoxIO JA4 / JA4S fingerprints over UDP/443 (`nspecter quic-audit <file_or_hex> [--json]`).
 - [x] **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`v0.8.0`)** — Analyze flow inter-arrival timestamps ($\Delta t$), mean/variance/median jitter, coefficient of variation ($CV$), interval frequency spectrograms, and periodicity scores across PCAP/PCAPNG captures to detect automated C2 heartbeats and covert beaconing (`nspecter beacon-audit <file> [--json]`).
+- [x] **BPF-Style Packet Filter Expression Engine (`v0.9.0`)** — Recursive-descent AST evaluator supporting IPv4/IPv6 CIDR matching, port and port-range filters, protocol tests, TCP flag masks, packet length comparisons, and boolean combinators across PCAP and PCAPNG captures (`nspecter filter <file> <expr> [--json]`, `inspect-pcap --filter`).
+- [x] **SSH HASSH Client & Server Key-Exchange Fingerprinting (`v0.10.0`)** — Zero-dependency RFC 4253 SSH banner parser and `SSH_MSG_KEXINIT` (Type 20) decoder with packet header extraction and all 10 algorithm name-lists; computes Salesforce `HASSH` (client) and `HASSHServer` (server) raw strings, MD5 fingerprints, and SHA-256 extended digests across PCAP, PCAPNG, and raw byte streams (`nspecter hassh <file_or_hex> [--json]`).
 
 ---
 
 ## Planned Milestones
 
 ### Capture Formats & Transport Reassembly
-- [ ] **BPF-Style Packet Filter Expression Engine (`src/filter.rs`)** — Filter captures by IP CIDR, port ranges, transport protocol, TCP flag masks, and payload byte signatures (`--filter "tcp port 443 and syn"`).
 - [ ] **IPv6 Extension Header & Fragmentation Chain Inspector (`src/ipv6_ext.rs`)** — Walk Hop-by-Hop, Routing, Fragment, and encapsulating security headers to detect evasion and overlapping fragment anomalies.
 - [ ] **PCAP Sanitizer & PII Anonymizer (`src/anonymize.rs`)** — Prefix-preserving IPv4/IPv6 address pseudonymization, MAC scrubbing, and payload truncation for safe capture sharing (`nspecter scrub`).
 
 ### Cryptographic Protocol Fingerprinting
 - [ ] **Encrypted Client Hello (ECH / ESNI) & DoH Bootstrap Detector (`src/ech.rs`)** — Identify TLS `encrypted_client_hello` (`0xfe0d`) extensions and DNS `HTTPS`/`SVCB` (`TYPE65`) bootstrap records.
-- [ ] **SSH Hassh Client & Server Key-Exchange Fingerprinting (`src/ssh_hassh.rs`)** — Parse `SSH_MSG_KEXINIT` packets and compute `HASSH` / `HASSHServer` MD5 and SHA-256 algorithm negotiation fingerprints.
 - [ ] **TCP SYN Passive OS Fingerprinting (`src/p0f.rs`)** — Fingerprint client operating systems from initial TTL, TCP window size, MSS, SACK permitted, and TCP option ordering (`JA4T`).
 - [ ] **TLS 1.3 Key Log (`SSLKEYLOGFILE`) Session Decryptor (`src/tls_decrypt.rs`)** — Parse NSS key log files to decrypt captured TLS sessions for offline deep inspection.
 - [ ] **SNI Proxy & Transparent TLS Downgrade Detector (`src/sni_proxy.rs`)** — Detect mismatched SNI vs HTTP Host headers, TLS fallback signaling (`TLS_FALLBACK_SCSV`), and transparent proxy MITM anomalies.
