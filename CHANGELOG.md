@@ -2,6 +2,29 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.6.0] - 2026-10-13
+
+### Added
+- **TLS ServerHello JA3S Fingerprinting Engine (`src/tls_cert.rs`)**:
+  - Parses TLS Handshake (`0x16`) `ServerHello` (`0x02`) records across TLS 1.2 and TLS 1.3 negotiated sessions.
+  - Extracts server version, negotiated cipher suite, extension vectors, ALPN protocol selections, and TLS 1.3 `supported_versions` (`0x002b`).
+  - Implements RFC 8701 GREASE filtering (`0x?a?a`) for server extensions to compute canonical JA3S strings, MD5 digests, and SHA-256 extended hashes.
+- **TLS 1.2 & TLS 1.3 Certificate Message Extraction**:
+  - Decodes TLS `Certificate` (`0x0b`) handshake messages supporting both TLS 1.2 (`certificates_length` + sequence of certificates) and RFC 8446 TLS 1.3 (`certificate_request_context` + `CertificateEntry` list with per-entry extensions).
+- **Zero-Dependency ASN.1 DER Parser for X.509 Certificates**:
+  - Implemented lightweight, memory-safe ASN.1 DER parser in `src/tls_cert.rs` without external cryptographic or ASN.1 dependencies.
+  - Extracts X.509 Subject DN and Issuer DN attributes (`CN`, `O`, `OU`, `C`, `L`, `ST`, `emailAddress`).
+  - Decodes validity intervals (`notBefore`, `notAfter`) across both `UTCTime` (`0x17`) and `GeneralizedTime` (`0x18`) into ISO 8601 timestamps and Unix epoch seconds.
+  - Decodes Subject Alternative Names (SANs) for DNS names (`[2]` IA5String) and IP addresses (`[7]` IPv4/IPv6).
+  - Extracts serial numbers (hexadecimal representation) and signature algorithm identifiers (`sha256WithRSAEncryption`, `ecdsa-with-SHA256`, etc.).
+  - Detects certificate anomalies including expiration (`expired`), pre-validity (`not_yet_valid`), inverted validity intervals (`inverted_validity`), legacy/weak algorithms (`weak_algorithm` for MD2/MD5/SHA-1), and self-signed certificates (`self_signed`).
+- **PCAP & PCAPNG Forensic Capture Auditing**:
+  - Implemented `audit_cert_bytes` to extract ServerHello handshakes and X.509 certificate chains across raw capture frames and reassembled TCP streams with automatic deduplication.
+- **CLI Subcommand (`nspecter cert-audit`)**:
+  - Added `nspecter cert-audit <file_or_hex> [--json]` in `src/cli.rs` and `src/main.rs`.
+- **Integration Test Suite (`tests/tls_cert_test.rs`)**:
+  - Added 7 integration tests covering JA3S computation with GREASE immunity, X.509 DER parsing, TLS 1.2 / TLS 1.3 certificate message extraction, anomaly detection (expired, weak crypto, self-signed), PCAP / PCAPNG capture extraction, CLI `cert-audit --json` execution, and adversarial bounds / length overflow attacks.
+
 ## [0.5.0] - 2026-10-13
 
 ### Added

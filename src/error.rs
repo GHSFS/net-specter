@@ -15,6 +15,7 @@ pub enum SpecterError {
     MalformedTls(String),
     MalformedDns(String),
     MalformedHttp(String),
+    MalformedCert(String),
     InvalidArgument(String),
 }
 
@@ -28,6 +29,7 @@ impl fmt::Display for SpecterError {
             Self::MalformedTls(msg) => write!(f, "Malformed TLS record: {msg}"),
             Self::MalformedDns(msg) => write!(f, "Malformed DNS message: {msg}"),
             Self::MalformedHttp(msg) => write!(f, "Malformed HTTP message: {msg}"),
+            Self::MalformedCert(msg) => write!(f, "Malformed X.509 certificate: {msg}"),
             Self::InvalidArgument(msg) => write!(f, "Invalid argument: {msg}"),
         }
     }

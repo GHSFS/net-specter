@@ -35,6 +35,7 @@ net-specter (nspecter) is a fast, memory-safe command-line utility and Rust libr
 5. **JA4 & JA4S Modern TLS / QUIC Fingerprinting Engine (`src/ja4.rs`)** — Computes FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC, and DTLS transports.
 6. **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstructs bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, DoS memory limits, and multi-segment application protocol inspection (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
 7. **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Fingerprinting (`src/http_inspect.rs`)** — Parses HTTP/1.1 requests and responses, decodes HTTP/2 connection prefaces, binary frame streams, and `SETTINGS` parameters, and computes FoxIO-compliant `JA4H` client fingerprints (`nspecter http-audit`).
+8. **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`src/tls_cert.rs`)** — Extracts JA3S server response fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decodes TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) messages, provides a zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity timestamps, DNS/IP SANs, serial numbers, signature algorithms), and flags certificate anomalies (expired, not yet valid, inverted validity, weak signature algorithms, self-signed) across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit`).
 
 </details>
 
@@ -94,6 +95,9 @@ cargo build --release
 
 # 8. Inspect HTTP/1.1 & HTTP/2 frames and compute JA4H HTTP client fingerprints
 ./target/release/nspecter http-audit capture.pcap --json
+
+# 9. Forensically audit TLS ServerHello JA3S fingerprints and X.509 certificate chains
+./target/release/nspecter cert-audit capture.pcap --json
 ```
 
 </details>
@@ -123,6 +127,7 @@ net-specter/
 │   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
 │   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
+│   ├── tls_cert.rs                # TLS ServerHello JA3S, TLS 1.2/1.3 Certs & X.509 ASN.1 parser
 │   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
 │   ├── tcp_stream.rs              # Stateful TCP stream reassembly & out-of-order tracker
 │   ├── http_inspect.rs            # HTTP/1.1, HTTP/2 SETTINGS frame & JA4H fingerprint engine
@@ -133,6 +138,7 @@ net-specter/
     ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
     ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
     ├── http_inspect_test.rs       # HTTP/1.1, HTTP/2 frames & JA4H integration tests
+    ├── tls_cert_test.rs           # ServerHello JA3S, X.509 ASN.1 DER & anomaly integration tests
     └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
 ```
 

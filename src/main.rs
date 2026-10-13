@@ -13,6 +13,7 @@ use net_specter::ja4::{extract_ja4_from_capture_bytes, Ja4Fingerprint};
 use net_specter::pcap::{build_synthetic_pcap, parse_pcap_bytes};
 use net_specter::pcapng::{build_synthetic_pcapng, is_pcapng, parse_pcapng_bytes};
 use net_specter::tcp_stream::reassemble_capture_bytes;
+use net_specter::tls_cert::audit_cert_bytes;
 use net_specter::tls_ja3::parse_tls_client_hello;
 use std::fs;
 use std::path::Path;
@@ -417,6 +418,53 @@ fn run() -> Result<()> {
                         h2.frames.len(),
                         h2.settings.len()
                     );
+                }
+            }
+        }
+        Commands::CertAudit { file_or_hex, json } => {
+            let bytes = load_bytes_or_hex(&file_or_hex)?;
+            let report = audit_cert_bytes(&bytes)?;
+            if json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&report)
+                        .map_err(|e| SpecterError::InvalidArgument(e.to_string()))?
+                );
+            } else {
+                println!(
+                    "TLS Forensic Audit: {} ServerHello(s), {} Certificate(s) ({} anomalies)",
+                    report.server_hellos.len(),
+                    report.certificates.len(),
+                    report.total_anomalies
+                );
+                for sh in &report.server_hellos {
+                    println!(
+                        "  [ServerHello JA3S] Ver=0x{:04x} Cipher=0x{:04x} JA3S={} MD5={} SHA256={}",
+                        sh.server_version, sh.cipher_suite, sh.ja3s_string, sh.ja3s_md5, sh.ja3s_sha256
+                    );
+                }
+                for (i, c) in report.certificates.iter().enumerate() {
+                    println!(
+                        "  [Cert #{}] Subject=\"{}\" Issuer=\"{}\" Serial={} Algo={}",
+                        i + 1,
+                        c.subject,
+                        c.issuer,
+                        c.serial_number,
+                        c.signature_algorithm
+                    );
+                    println!("    Validity: {} to {}", c.not_before, c.not_after);
+                    if !c.sans_dns.is_empty() {
+                        println!("    SANs DNS: {}", c.sans_dns.join(", "));
+                    }
+                    if !c.sans_ip.is_empty() {
+                        println!("    SANs IP: {}", c.sans_ip.join(", "));
+                    }
+                    if c.is_self_signed {
+                        println!("    Self-Signed: true");
+                    }
+                    if !c.anomalies.is_empty() {
+                        println!("    Anomalies: {}", c.anomalies.join(", "));
+                    }
                 }
             }
         }
