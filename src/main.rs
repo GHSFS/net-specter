@@ -9,6 +9,7 @@ use net_specter::beacon::{audit_beacon_bytes, BeaconAuditConfig};
 use net_specter::cli::{Cli, Commands};
 use net_specter::dns::parse_dns_packet;
 use net_specter::error::{Result, SpecterError};
+use net_specter::filter::{evaluate_filter_on_capture, FilterExpr};
 use net_specter::http_inspect::audit_http_bytes;
 use net_specter::ja4::{extract_ja4_from_capture_bytes, Ja4Fingerprint};
 use net_specter::pcap::{build_synthetic_pcap, parse_pcap_bytes};
@@ -36,10 +37,25 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::InspectPcap { file, json } => {
+        Commands::InspectPcap { file, filter, json } => {
             let bytes = fs::read(&file)?;
             if is_pcapng(&bytes) {
-                let report = parse_pcapng_bytes(&bytes)?;
+                let mut report = parse_pcapng_bytes(&bytes)?;
+                if let Some(ref filter_str) = filter {
+                    let parsed_filter = FilterExpr::parse(filter_str)?;
+                    report.frames.retain(|f| parsed_filter.matches(f));
+                    report.total_packets = report.frames.len();
+                    report.tcp_packets = report
+                        .frames
+                        .iter()
+                        .filter(|f| f.protocol.eq_ignore_ascii_case("TCP"))
+                        .count();
+                    report.udp_packets = report
+                        .frames
+                        .iter()
+                        .filter(|f| f.protocol.eq_ignore_ascii_case("UDP"))
+                        .count();
+                }
                 if json {
                     println!(
                         "{}",
@@ -102,7 +118,22 @@ fn run() -> Result<()> {
                     }
                 }
             } else {
-                let report = parse_pcap_bytes(&bytes)?;
+                let mut report = parse_pcap_bytes(&bytes)?;
+                if let Some(ref filter_str) = filter {
+                    let parsed_filter = FilterExpr::parse(filter_str)?;
+                    report.frames.retain(|f| parsed_filter.matches(f));
+                    report.total_packets = report.frames.len();
+                    report.tcp_packets = report
+                        .frames
+                        .iter()
+                        .filter(|f| f.protocol.eq_ignore_ascii_case("TCP"))
+                        .count();
+                    report.udp_packets = report
+                        .frames
+                        .iter()
+                        .filter(|f| f.protocol.eq_ignore_ascii_case("UDP"))
+                        .count();
+                }
                 if json {
                     println!(
                         "{}",
@@ -625,6 +656,40 @@ fn run() -> Result<()> {
                         f.spectrogram.dominant_freq_hz,
                         f.spectrogram.peak_power_ratio,
                         f.spectrogram.bins.len()
+                    );
+                }
+            }
+        }
+        Commands::Filter { file, filter, json } => {
+            let bytes = fs::read(&file)?;
+            let report = evaluate_filter_on_capture(&bytes, &filter)?;
+            if json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&report)
+                        .map_err(|e| SpecterError::InvalidArgument(e.to_string()))?
+                );
+            } else {
+                println!(
+                    "BPF Filter: '{}' (canonical: {}) | Matched {}/{} frames (TCP={}, UDP={}, Other={})",
+                    report.filter_expression,
+                    report.canonical_expression,
+                    report.matched_packets,
+                    report.total_input_packets,
+                    report.tcp_matched,
+                    report.udp_matched,
+                    report.other_matched
+                );
+                for f in &report.frames {
+                    println!(
+                        "  #[{}] {} {}:{} -> {}:{} ({} bytes payload)",
+                        f.index,
+                        f.protocol,
+                        f.src_ip,
+                        f.src_port,
+                        f.dst_ip,
+                        f.dst_port,
+                        f.payload.len()
                     );
                 }
             }

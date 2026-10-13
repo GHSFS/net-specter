@@ -2,6 +2,16 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.9.0] - 2026-10-13
+
+### Added
+- **BPF-Style Packet Filter Expression Engine (`src/filter/`)**:
+  - Implemented recursive-descent tokenizer and AST evaluator supporting protocol predicates (`tcp`, `udp`, `icmp`, `ip`, `ip6`), directional qualifiers (`src`, `dst`), IPv4/IPv6 host and CIDR subnet matching (`net 192.168.0.0/16`, `2001:db8::/32`), port and port-range filters (`port 443`, `portrange 1024-2048`), TCP flag expressions (`tcp[tcpflags] & (tcp-syn|tcp-ack) != 0`, `tcpflags syn,ack`, `syn and not ack`), packet length comparisons (`len >= 1500`), and boolean combinators (`and`, `or`, `not`, parenthesized grouping).
+- **CLI Subcommand (`nspecter filter` & `inspect-pcap --filter`)**:
+  - Added `nspecter filter <file> <expr> [--json]` and `--filter` option on `inspect-pcap`.
+- **Integration Test Suite (`tests/filter_test.rs`)**:
+  - Added 9 integration tests covering BPF expression parsing, IPv4/IPv6 CIDR matching, port ranges, TCP flag bitmasks, packet length filters, PCAP/PCAPNG capture filtering, adversarial input rejection, and CLI execution.
+
 ## [0.8.0] - 2026-10-13
 
 ### Added
