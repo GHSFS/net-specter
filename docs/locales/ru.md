@@ -38,6 +38,8 @@ net-specter (nspecter) — это быстрый и безопасный к па
 8. **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`src/tls_cert.rs`)** — Extracts JA3S server response fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decodes TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) messages, provides a zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity timestamps, DNS/IP SANs, serial numbers, signature algorithms), and flags certificate anomalies (expired, not yet valid, inverted validity, weak signature algorithms, self-signed) across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit`).
 9. **QUIC Initial Packet & RFC 9001 Decryptor (`src/quic.rs`, `src/quic_crypto.rs`)** — Derives initial keys via HKDF-SHA256, unmasks RFC 9001 header protection, decrypts QUIC Initial packets with pure Rust AES-128-GCM, reassembles CRYPTO frames, and extracts TLS 1.3 JA3/JA4 fingerprints over UDP/443 (`nspecter quic-audit`).
 10. **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)** — Analyzes flow inter-arrival deltas ($Delta t$), mean/variance/median jitter, coefficient of variation ($CV$), interval frequency spectrograms, and periodicity scores to classify automated C2 heartbeats (`HighConfidenceBeacon`, `JitteredBeacon`, `SuspectInterval`, `Benign`) across PCAP and PCAPNG captures (`nspecter beacon-audit`).
+11. **BPF-Style Packet Filter Expression Engine (`src/filter/`)** — Evaluates packet filters against IPv4/IPv6 CIDRs, port ranges, transport protocols, TCP flag masks, and frame lengths (`nspecter filter`).
+12. **SSH HASSH Client & Server Key-Exchange Fingerprinting (`src/ssh_hassh.rs`)** — Parses RFC 4253 SSH banners and `SSH_MSG_KEXINIT` packets, computing Salesforce `HASSH` and `HASSHServer` MD5 and SHA-256 fingerprints across PCAP, PCAPNG, and raw byte streams (`nspecter hassh`).
 
 </details>
 
@@ -106,6 +108,12 @@ cargo build --release
 
 # 11. Audit C2 beacon jitter and periodic interval spectrograms
 ./target/release/nspecter beacon-audit capture.pcap --min-events 4 --json
+
+# 12. Filter capture frames using BPF-style expressions
+./target/release/nspecter filter capture.pcap "tcp port 443" --json
+
+# 13. Extract SSH banners, parse KEXINIT negotiations, and compute Salesforce HASSH fingerprints
+./target/release/nspecter hassh capture.pcap --json
 ```
 
 </details>
@@ -129,14 +137,17 @@ net-specter/
 ├── NOTICE                         # Attribution notice (GHSFS)
 ├── src/
 │   ├── lib.rs                     # Public library exports
-│   ├── main.rs                    # CLI entrypoint & output formatter
+│   ├── main.rs                    # CLI entrypoint (<25L dispatcher)
 │   ├── cli.rs                     # Clap subcommand definitions
 │   ├── error.rs                   # Unified SpecterError & Result<T>
+│   ├── commands/                  # Modular CLI command handlers (inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh)
+│   ├── filter/                    # BPF-style recursive-descent filter parser & evaluator
 │   ├── beacon.rs                  # C2 beacon jitter & interval spectrogram detector
 │   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
 │   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
 │   ├── quic.rs                    # QUIC Initial packet & CRYPTO stream extractor
 │   ├── quic_crypto.rs             # Pure Rust HKDF-SHA256, AES-128 & GCM decryptor
+│   ├── ssh_hassh.rs               # SSH-2.0 banner & Salesforce HASSH/HASSHServer engine
 │   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
 │   ├── tls_cert.rs                # TLS ServerHello JA3S, TLS 1.2/1.3 Certs & X.509 ASN.1 parser
 │   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
@@ -145,10 +156,12 @@ net-specter/
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
     ├── beacon_test.rs             # C2 beacon jitter, spectrogram & classification tests
+    ├── filter_test.rs             # BPF-style packet filter expression tests
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
     ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
     ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
     ├── quic_test.rs               # RFC 9001 HKDF, AES-GCM & QUIC Initial decrypt tests
+    ├── ssh_hassh_test.rs          # SSH banner, KEXINIT & Salesforce HASSH tests
     ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
     ├── http_inspect_test.rs       # HTTP/1.1, HTTP/2 frames & JA4H integration tests
     ├── tls_cert_test.rs           # ServerHello JA3S, X.509 ASN.1 DER & anomaly integration tests

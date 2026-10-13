@@ -2,6 +2,21 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.10.0] - 2026-10-13
+
+### Added
+- **SSH HASSH Client & Server Key-Exchange Fingerprinting (`src/ssh_hassh.rs`)**:
+  - Implemented zero-dependency RFC 4253 Section 4.2 identification banner parser extracting protocol version, software identification string, and optional comments, with support for line feeds and server preamble lines.
+  - Implemented RFC 4253 Section 7.1 `SSH_MSG_KEXINIT` (message type 20 / 0x14) parser decoding packet header length, padding length, 16-byte random cookie, and all 10 name-lists (`kex_algorithms`, `server_host_key_algorithms`, `encryption_algorithms_client_to_server`, `encryption_algorithms_server_to_client`, `mac_algorithms_client_to_server`, `mac_algorithms_server_to_client`, `compression_algorithms_client_to_server`, `compression_algorithms_server_to_client`, `languages_client_to_server`, `languages_server_to_client`), plus `first_kex_packet_follows`.
+  - Added Salesforce `HASSH` (client) and `HASSHServer` (server) fingerprint calculation producing raw delimiter-separated algorithm strings, 32-character lowercase MD5 digests, and 64-character lowercase SHA-256 extended hashes.
+  - Added capture auditing (`audit_ssh_bytes`) supporting classic PCAP, PCAPNG, and raw byte/hex payloads with bidirectional TCP stream reassembly endpoint tracking.
+  - Added deterministic synthetic SSH packet generator (`build_synthetic_ssh_kexinit`) and multi-frame PCAP generator (`build_synthetic_ssh_pcap`).
+- **CLI Command Modularization (`src/commands/` & `src/main.rs`)**:
+  - Decomposed monolithic 708-line CLI handler in `src/main.rs` into isolated domain submodules under `src/commands/` (`inspect`, `tls`, `dns`, `tcp`, `http`, `cert`, `quic`, `synth`, `beacon`, `filter`, `hassh`), reducing `src/main.rs` to under 25 lines in compliance with `docs/VIBE_CODING_MODULAR_GUIDE.md` Pattern B.
+  - Added CLI subcommand `nspecter hassh <file_or_hex> [--json]`.
+- **Integration Test Suite (`tests/ssh_hassh_test.rs`)**:
+  - Added 9 isolated integration tests covering RFC 4253 banner parsing (OpenSSH, PuTTY, Dropbear, preamble headers), exact Salesforce HASSH/HASSHServer raw string and MD5/SHA-256 calculation, synthetic client/server KEXINIT parsing, synthetic PCAP capture auditing, adversarial truncated/corrupted packet bounds testing, and CLI subprocess execution.
+
 ## [0.9.0] - 2026-10-13
 
 ### Added
