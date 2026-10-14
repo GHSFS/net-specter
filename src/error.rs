@@ -20,6 +20,7 @@ pub enum SpecterError {
     InvalidFilter(String),
     MalformedSsh(String),
     MalformedIcmp(String),
+    MalformedFp(String),
     InvalidArgument(String),
 }
 
@@ -38,6 +39,7 @@ impl fmt::Display for SpecterError {
             Self::InvalidFilter(msg) => write!(f, "Invalid packet filter: {msg}"),
             Self::MalformedSsh(msg) => write!(f, "Malformed SSH packet: {msg}"),
             Self::MalformedIcmp(msg) => write!(f, "Malformed ICMP packet: {msg}"),
+            Self::MalformedFp(msg) => write!(f, "Malformed fingerprint data: {msg}"),
             Self::InvalidArgument(msg) => write!(f, "Invalid argument: {msg}"),
         }
     }

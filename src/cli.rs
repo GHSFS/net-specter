@@ -147,4 +147,12 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Passive OS fingerprinting from TCP SYN/SYN-ACK packets (p0f & FoxIO JA4T)
+    OsFp {
+        /// Path to a .pcap/.pcapng file, raw packet dump, or hex-encoded TCP packet
+        file_or_hex: String,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
 }

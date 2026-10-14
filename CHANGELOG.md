@@ -2,6 +2,23 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.12.0] - 2026-10-14
+
+### Added
+- **TCP SYN Passive OS Fingerprinting & FoxIO JA4T/JA4TS Engine (`src/p0f.rs`)**:
+  - Implemented zero-dependency TCP options parser (RFC 793, RFC 1323, RFC 2018) decoding ordered option kinds, Maximum Segment Size (MSS), Window Scale (WSCALE), SACK Permitted, and Timestamps.
+  - Implemented FoxIO JA4T (client SYN) and JA4TS (server SYN-ACK) fingerprinting generating canonical `{window_size}_{options}_{wscale}_{mss}` strings and 12-character SHA-256 hashes.
+  - Added p0f v3 style signature generation (`ver:ittl:distance:olen:mss:wsize,scale:olayout:quirks:payload`) with initial TTL distance estimation and anomaly quirk detection.
+  - Added OS classification profiles for Windows 10/11 / Server 2016-2022, Windows 7/8, Linux 3.x-6.x kernels, Apple macOS/iOS (Darwin), FreeBSD/OpenBSD, Cisco IOS/network equipment, and port scanners (Nmap, Masscan, ZMap).
+  - Added TCP SYN anomaly detection: zero window SYN, reserved/conflicting flags (SYN+FIN, SYN+RST), illegal WSCALE factors (> 14), missing/abnormal MSS, and option bounds over-reads.
+  - Added deterministic multi-packet synthetic PCAP generator (`build_synthetic_syn_pcap`) modeling diverse OS fingerprints and adversarial scanner probes.
+- **DecodedFrame Enhancement (`src/pcap.rs`)**:
+  - Populated `tcp_window`, `tcp_options`, and `ip_df` (IPv4 Don't Fragment flag) fields directly on `DecodedFrame` during frame decoding, providing instant access to TCP parameters across all capture parsers.
+- **CLI Subcommand (`src/commands/os_fp.rs` & `nspecter os-fp`)**:
+  - Added `nspecter os-fp <file_or_hex> [--json]` supporting `.pcap`, `.pcapng`, and raw packet captures with host OS inventory, confidence ratings, JA4T digests, and anomalous packet alerts.
+- **Integration Test Suite (`tests/p0f_test.rs`)**:
+  - Added 6 integration tests covering exact FoxIO JA4T calculation, p0f signature generation, OS profile matching, adversarial options bounds testing, synthetic PCAP capture auditing, and CLI execution.
+
 ## [0.11.0] - 2026-10-13
 
 ### Added

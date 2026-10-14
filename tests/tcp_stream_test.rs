@@ -36,6 +36,9 @@ fn make_tcp_frame(
         tcp_seq: Some(seq),
         tcp_ack: Some(ack),
         tcp_flags: Some(flags),
+        tcp_window: Some(64240),
+        tcp_options: Some(Vec::new()),
+        ip_df: Some(true),
         payload: payload.to_vec(),
     }
 }

@@ -12,6 +12,7 @@ pub mod hassh;
 pub mod http;
 pub mod icmp;
 pub mod inspect;
+pub mod os_fp;
 pub mod quic;
 pub mod synth;
 pub mod tcp;
@@ -77,5 +78,6 @@ pub fn execute(command: Commands) -> Result<()> {
             dump_payload,
             json,
         } => icmp::handle_icmp_tunnel(&file_or_hex, dump_payload, json),
+        Commands::OsFp { file_or_hex, json } => os_fp::handle_os_fp(&file_or_hex, json),
     }
 }

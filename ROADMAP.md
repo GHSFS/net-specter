@@ -17,6 +17,7 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 - [x] **BPF-Style Packet Filter Expression Engine (`v0.9.0`)** — Recursive-descent AST evaluator supporting IPv4/IPv6 CIDR matching, port and port-range filters, protocol tests, TCP flag masks, packet length comparisons, and boolean combinators across PCAP and PCAPNG captures (`nspecter filter <file> <expr> [--json]`, `inspect-pcap --filter`).
 - [x] **SSH HASSH Client & Server Key-Exchange Fingerprinting (`v0.10.0`)** — Zero-dependency RFC 4253 SSH banner parser and `SSH_MSG_KEXINIT` (Type 20) decoder with packet header extraction and all 10 algorithm name-lists; computes Salesforce `HASSH` (client) and `HASSHServer` (server) raw strings, MD5 fingerprints, and SHA-256 extended digests across PCAP, PCAPNG, and raw byte streams (`nspecter hassh <file_or_hex> [--json]`).
 - [x] **ICMP Echo Payload & Timing Covert Tunnel Detector (`v0.11.0`)** — Decode ICMPv4 (RFC 792) and ICMPv6 (RFC 4443) Echo Request and Reply frames, verify 8-byte minimum header bounds, calculate Shannon entropy, recognize standard OS ping signatures (Windows 32-byte, Linux 56-byte timeval), flag Echo Request/Reply payload divergence (RFC violation/tampering), sequence gaps, and plaintext shell command exfiltration (`nspecter icmp-tunnel <file> [--json] [--dump-payload]`).
+- [x] **TCP SYN Passive OS Fingerprinting & FoxIO JA4T/JA4TS Engine (`v0.12.0`)** — Extract TCP SYN and SYN-ACK header options, initial TTL, window size, MSS, and window scale factor to compute FoxIO JA4T/JA4TS fingerprints and p0f v3 signatures; classify operating system families (Windows 10/11, Windows 7/8, Linux kernels, Apple macOS/iOS Darwin, BSD, Cisco) and port scanners (Nmap, Masscan, ZMap) with TCP flag and anomaly diagnostics (`nspecter os-fp <file_or_hex> [--json]`).
 
 ---
 
@@ -28,7 +29,6 @@ This document tracks shipped capabilities and planned packet forensics, protocol
 
 ### Cryptographic Protocol Fingerprinting
 - [ ] **Encrypted Client Hello (ECH / ESNI) & DoH Bootstrap Detector (`src/ech.rs`)** — Identify TLS `encrypted_client_hello` (`0xfe0d`) extensions and DNS `HTTPS`/`SVCB` (`TYPE65`) bootstrap records.
-- [ ] **TCP SYN Passive OS Fingerprinting (`src/p0f.rs`)** — Fingerprint client operating systems from initial TTL, TCP window size, MSS, SACK permitted, and TCP option ordering (`JA4T`).
 - [ ] **TLS 1.3 Key Log (`SSLKEYLOGFILE`) Session Decryptor (`src/tls_decrypt.rs`)** — Parse NSS key log files to decrypt captured TLS sessions for offline deep inspection.
 - [ ] **SNI Proxy & Transparent TLS Downgrade Detector (`src/sni_proxy.rs`)** — Detect mismatched SNI vs HTTP Host headers, TLS fallback signaling (`TLS_FALLBACK_SCSV`), and transparent proxy MITM anomalies.
 

@@ -34,6 +34,9 @@ fn make_dummy_frame(
         tcp_seq: Some(1000),
         tcp_ack: Some(0),
         tcp_flags: flags,
+        tcp_window: Some(64240),
+        tcp_options: Some(Vec::new()),
+        ip_df: Some(true),
         payload: vec![0xaa; 32],
     }
 }

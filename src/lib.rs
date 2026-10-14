@@ -17,6 +17,7 @@ pub mod filter;
 pub mod http_inspect;
 pub mod icmp_tunnel;
 pub mod ja4;
+pub mod p0f;
 pub mod pcap;
 pub mod pcapng;
 pub mod quic;

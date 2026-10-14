@@ -54,6 +54,9 @@ pub struct DecodedFrame {
     pub tcp_seq: Option<u32>,
     pub tcp_ack: Option<u32>,
     pub tcp_flags: Option<TcpFlags>,
+    pub tcp_window: Option<u16>,
+    pub tcp_options: Option<Vec<u8>>,
+    pub ip_df: Option<bool>,
     pub payload: Vec<u8>,
 }
 
@@ -258,7 +261,7 @@ pub fn decode_frame(
     }
 
     let ip_version = l3_slice[0] >> 4;
-    let (src_ip, dst_ip, ttl, proto_num, l4_slice) = match ip_version {
+    let (src_ip, dst_ip, ttl, proto_num, ip_df, l4_slice) = match ip_version {
         4 => {
             if l3_slice.len() < 20 {
                 return Err(SpecterError::InvalidPacket(
@@ -275,11 +278,12 @@ pub fn decode_frame(
             let clamped_end = total_len.min(l3_slice.len());
             let ttl = l3_slice[8];
             let proto = l3_slice[9];
+            let df = (l3_slice[6] & 0x40) != 0;
             let src =
                 Ipv4Addr::new(l3_slice[12], l3_slice[13], l3_slice[14], l3_slice[15]).to_string();
             let dst =
                 Ipv4Addr::new(l3_slice[16], l3_slice[17], l3_slice[18], l3_slice[19]).to_string();
-            (src, dst, ttl, proto, &l3_slice[ihl..clamped_end])
+            (src, dst, ttl, proto, Some(df), &l3_slice[ihl..clamped_end])
         }
         6 => {
             if l3_slice.len() < 40 {
@@ -297,7 +301,7 @@ pub fn decode_frame(
             let src = Ipv6Addr::from(src_octets).to_string();
             let dst = Ipv6Addr::from(dst_octets).to_string();
             let end = (40 + payload_len).min(l3_slice.len());
-            (src, dst, hop_limit, next_header, &l3_slice[40..end])
+            (src, dst, hop_limit, next_header, None, &l3_slice[40..end])
         }
         other => {
             return Err(SpecterError::InvalidPacket(format!(
@@ -331,6 +335,8 @@ pub fn decode_frame(
                 psh: (flags_byte & 0x08) != 0,
                 ack: (flags_byte & 0x10) != 0,
             };
+            let tcp_window = u16::from_be_bytes([l4_slice[14], l4_slice[15]]);
+            let tcp_options = l4_slice[20..data_offset].to_vec();
             Ok(DecodedFrame {
                 index,
                 ts_sec,
@@ -346,6 +352,9 @@ pub fn decode_frame(
                 tcp_seq: Some(seq),
                 tcp_ack: Some(ack),
                 tcp_flags: Some(flags),
+                tcp_window: Some(tcp_window),
+                tcp_options: Some(tcp_options),
+                ip_df,
                 payload: l4_slice[data_offset..].to_vec(),
             })
         }
@@ -374,6 +383,9 @@ pub fn decode_frame(
                 tcp_seq: None,
                 tcp_ack: None,
                 tcp_flags: None,
+                tcp_window: None,
+                tcp_options: None,
+                ip_df,
                 payload: l4_slice[8..end].to_vec(),
             })
         }
@@ -392,6 +404,9 @@ pub fn decode_frame(
             tcp_seq: None,
             tcp_ack: None,
             tcp_flags: None,
+            tcp_window: None,
+            tcp_options: None,
+            ip_df,
             payload: l4_slice.to_vec(),
         }),
         58 => Ok(DecodedFrame {
@@ -409,6 +424,9 @@ pub fn decode_frame(
             tcp_seq: None,
             tcp_ack: None,
             tcp_flags: None,
+            tcp_window: None,
+            tcp_options: None,
+            ip_df,
             payload: l4_slice.to_vec(),
         }),
         other => Ok(DecodedFrame {
@@ -426,6 +444,9 @@ pub fn decode_frame(
             tcp_seq: None,
             tcp_ack: None,
             tcp_flags: None,
+            tcp_window: None,
+            tcp_options: None,
+            ip_df,
             payload: l4_slice.to_vec(),
         }),
     }
