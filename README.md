@@ -114,6 +114,15 @@ cargo build --release
 
 # 13. Extract SSH banners, parse KEXINIT negotiations, and compute Salesforce HASSH fingerprints
 ./target/release/nspecter hassh capture.pcap --json
+
+# 14. Audit ICMP Echo Request/Reply flows for covert tunnels and payload tampering
+./target/release/nspecter icmp-tunnel capture.pcap --dump-payload --json
+
+# 15. Passively fingerprint operating systems from TCP SYN packets (p0f v3 & FoxIO JA4T)
+./target/release/nspecter os-fp capture.pcap --json
+
+# 16. Audit ARP requests/replies for spoofing, gratuitous floods, and Layer-2 MITM anomalies
+./target/release/nspecter arp-audit capture.pcap --gateway 192.168.1.1 --json
 ```
 
 </details>
@@ -140,8 +149,11 @@ net-specter/
 │   ├── main.rs                    # CLI entrypoint (<25L dispatcher)
 │   ├── cli.rs                     # Clap subcommand definitions
 │   ├── error.rs                   # Unified SpecterError & Result<T>
-│   ├── commands/                  # Modular CLI command handlers (inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh)
+│   ├── commands/                  # Modular CLI command handlers (arp, inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh, icmp, os_fp)
 │   ├── filter/                    # BPF-style recursive-descent filter parser & evaluator
+│   ├── arp_audit.rs               # RFC 826 / RFC 5227 ARP spoofing & Layer-2 MITM detector
+│   ├── p0f/                       # Passive OS fingerprinting & FoxIO JA4T/JA4TS engine
+│   ├── icmp_tunnel.rs             # ICMP Echo covert tunnel & payload tampering detector
 │   ├── beacon.rs                  # C2 beacon jitter & interval spectrogram detector
 │   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
 │   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
@@ -155,6 +167,9 @@ net-specter/
 │   ├── http_inspect.rs            # HTTP/1.1, HTTP/2 SETTINGS frame & JA4H fingerprint engine
 │   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
 └── tests/
+    ├── arp_audit_test.rs          # ARP spoofing, gateway flapping & gratuitous flood tests
+    ├── p0f_test.rs                # TCP SYN passive OS & FoxIO JA4T integration tests
+    ├── icmp_tunnel_test.rs        # ICMP covert tunnel & Shannon entropy integration tests
     ├── beacon_test.rs             # C2 beacon jitter, spectrogram & classification tests
     ├── filter_test.rs             # BPF-style packet filter expression tests
     ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests

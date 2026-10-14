@@ -57,7 +57,24 @@ pub struct DecodedFrame {
     pub tcp_window: Option<u16>,
     pub tcp_options: Option<Vec<u8>>,
     pub ip_df: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub src_mac: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dst_mac: Option<String>,
     pub payload: Vec<u8>,
+}
+
+/// Formats a 6-byte Ethernet MAC address slice as lowercase hex with colons.
+#[inline]
+pub fn format_mac(bytes: &[u8]) -> String {
+    if bytes.len() >= 6 {
+        format!(
+            "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]
+        )
+    } else {
+        hex::encode(bytes)
+    }
 }
 
 /// Comprehensive summary of a `.pcap` capture file.
@@ -222,13 +239,15 @@ pub fn decode_frame(
     linktype: u32,
     raw: &[u8],
 ) -> Result<DecodedFrame> {
-    let l3_slice = match linktype {
+    let (l3_slice, src_mac, dst_mac) = match linktype {
         LINKTYPE_ETHERNET => {
             if raw.len() < 14 {
                 return Err(SpecterError::InvalidPacket(
                     "Ethernet II frame shorter than 14 bytes".into(),
                 ));
             }
+            let dst_mac = format_mac(&raw[0..6]);
+            let src_mac = format_mac(&raw[6..12]);
             let mut ethertype = u16::from_be_bytes([raw[12], raw[13]]);
             let mut l3_offset = 14usize;
             // IEEE 802.1Q VLAN tag unwrap
@@ -241,14 +260,58 @@ pub fn decode_frame(
                 ethertype = u16::from_be_bytes([raw[16], raw[17]]);
                 l3_offset = 18;
             }
+            if ethertype == 0x0806 {
+                let arp_slice = &raw[l3_offset..];
+                if arp_slice.len() < 28 {
+                    return Err(SpecterError::InvalidPacket(
+                        "ARP packet shorter than 28 bytes".into(),
+                    ));
+                }
+                let hlen = arp_slice[4];
+                let plen = arp_slice[5];
+                let oper = u16::from_be_bytes([arp_slice[6], arp_slice[7]]);
+                let (src_ip, dst_ip) = if hlen == 6 && plen == 4 && arp_slice.len() >= 28 {
+                    let spa =
+                        Ipv4Addr::new(arp_slice[14], arp_slice[15], arp_slice[16], arp_slice[17])
+                            .to_string();
+                    let tpa =
+                        Ipv4Addr::new(arp_slice[24], arp_slice[25], arp_slice[26], arp_slice[27])
+                            .to_string();
+                    (spa, tpa)
+                } else {
+                    ("0.0.0.0".to_string(), "0.0.0.0".to_string())
+                };
+                return Ok(DecodedFrame {
+                    index,
+                    ts_sec,
+                    ts_subsec,
+                    orig_len,
+                    src_ip,
+                    dst_ip,
+                    ip_version: 0,
+                    ttl: 0,
+                    protocol: "ARP".into(),
+                    src_port: 0,
+                    dst_port: oper,
+                    tcp_seq: None,
+                    tcp_ack: None,
+                    tcp_flags: None,
+                    tcp_window: None,
+                    tcp_options: None,
+                    ip_df: None,
+                    src_mac: Some(src_mac),
+                    dst_mac: Some(dst_mac),
+                    payload: arp_slice.to_vec(),
+                });
+            }
             if ethertype != 0x0800 && ethertype != 0x86DD {
                 return Err(SpecterError::InvalidPacket(format!(
                     "Unsupported EtherType 0x{ethertype:04x}"
                 )));
             }
-            &raw[l3_offset..]
+            (&raw[l3_offset..], Some(src_mac), Some(dst_mac))
         }
-        LINKTYPE_RAW_IP => raw,
+        LINKTYPE_RAW_IP => (raw, None, None),
         other => {
             return Err(SpecterError::InvalidPacket(format!(
                 "Unsupported linktype {other}"
@@ -355,6 +418,8 @@ pub fn decode_frame(
                 tcp_window: Some(tcp_window),
                 tcp_options: Some(tcp_options),
                 ip_df,
+                src_mac,
+                dst_mac,
                 payload: l4_slice[data_offset..].to_vec(),
             })
         }
@@ -386,6 +451,8 @@ pub fn decode_frame(
                 tcp_window: None,
                 tcp_options: None,
                 ip_df,
+                src_mac,
+                dst_mac,
                 payload: l4_slice[8..end].to_vec(),
             })
         }
@@ -407,6 +474,8 @@ pub fn decode_frame(
             tcp_window: None,
             tcp_options: None,
             ip_df,
+            src_mac,
+            dst_mac,
             payload: l4_slice.to_vec(),
         }),
         58 => Ok(DecodedFrame {
@@ -427,6 +496,8 @@ pub fn decode_frame(
             tcp_window: None,
             tcp_options: None,
             ip_df,
+            src_mac,
+            dst_mac,
             payload: l4_slice.to_vec(),
         }),
         other => Ok(DecodedFrame {
@@ -447,6 +518,8 @@ pub fn decode_frame(
             tcp_window: None,
             tcp_options: None,
             ip_df,
+            src_mac,
+            dst_mac,
             payload: l4_slice.to_vec(),
         }),
     }

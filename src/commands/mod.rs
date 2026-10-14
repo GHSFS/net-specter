@@ -4,6 +4,7 @@
 
 //! CLI Command Dispatcher and Modular Subcommand Handlers.
 
+pub mod arp;
 pub mod beacon;
 pub mod cert;
 pub mod dns;
@@ -79,5 +80,10 @@ pub fn execute(command: Commands) -> Result<()> {
             json,
         } => icmp::handle_icmp_tunnel(&file_or_hex, dump_payload, json),
         Commands::OsFp { file_or_hex, json } => os_fp::handle_os_fp(&file_or_hex, json),
+        Commands::ArpAudit {
+            file_or_hex,
+            gateway,
+            json,
+        } => arp::handle_arp_audit(&file_or_hex, gateway.as_deref(), json),
     }
 }

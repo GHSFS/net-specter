@@ -155,4 +155,15 @@ pub enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Audit ARP requests/replies for spoofing, gratuitous floods, and Layer-2 MITM anomalies
+    ArpAudit {
+        /// Path to a .pcap/.pcapng file, raw packet dump, or hex-encoded Ethernet ARP frame
+        file_or_hex: String,
+        /// Designated default gateway IP for MAC flapping detection (e.g. 192.168.1.1)
+        #[arg(long)]
+        gateway: Option<String>,
+        /// Emit structured JSON output
+        #[arg(long)]
+        json: bool,
+    },
 }

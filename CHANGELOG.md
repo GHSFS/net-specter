@@ -2,6 +2,28 @@
 
 All notable changes to `net-specter` (`nspecter`) are documented in this file.
 
+## [0.13.0] - 2026-10-14
+
+### Added
+- **ARP Spoofing & Layer-2 MITM Anomaly Detector (`src/arp_audit.rs`)**:
+  - Implemented zero-dependency parser for Ethernet Address Resolution Protocol (RFC 826 / RFC 5494, EtherType `0x0806`) supporting Request (`1`), Reply (`2`), RARP Request (`3`), and RARP Reply (`4`) operations with Ethernet hardware (`0x0001`) and IPv4 (`0x0800`) validation.
+  - Added specialized ARP message subtype classifier distinguishing standard requests/replies, gratuitous ARP requests/replies (`sender_ip == target_ip`), RFC 5227 Address Conflict Detection (ACD) probes (`0.0.0.0` sender IP), and ACD announcements.
+  - Implemented stateful IP-to-MAC binding tracker across packet capture sessions, mapping historical MAC transitions and tracking active host bindings.
+  - Added conflicting IP ownership detection flagging multiple distinct MAC addresses claiming the same IPv4 address.
+  - Implemented gateway MAC flapping and active Layer-2 MITM poisoning detection with automatic gateway IP discovery and user-configurable gateway overrides (`--gateway <ip>`).
+  - Added gratuitous ARP flood detection flagging high-frequency ARP storms and cache-poisoning bursts.
+  - Added Layer-2 vs Layer-3 MAC discrepancy forensics detecting mismatches between Ethernet frame source hardware address and ARP payload sender hardware address (`SHA`).
+  - Added RFC 826 violation detection flagging unicast ARP replies transmitted to broadcast Ethernet destination addresses (`ff:ff:ff:ff:ff:ff`).
+  - Added sanity checking for bogus hardware addresses (all-zeroes or multicast/broadcast bit set) and illegal sender IPs (loopback, multicast, or broadcast).
+  - Added deterministic multi-packet synthetic PCAP generator (`build_synthetic_arp_pcap`) modeling clean resolutions, IP conflicts, gateway flapping, gratuitous floods, L2/L3 MAC discrepancies, broadcast replies, and ACD probe/announcements.
+- **DecodedFrame Layer-2 MAC Extraction (`src/pcap.rs`)**:
+  - Added `src_mac` and `dst_mac` fields directly to `DecodedFrame`, extracted during Ethernet II frame decoding and transparently propagated across all capture inspection workflows.
+  - Extended `decode_frame` to decode EtherType `0x0806` ARP frames into `DecodedFrame` with protocol label `"ARP"` and sender/target IP addresses.
+- **CLI Subcommand (`src/commands/arp.rs` & `nspecter arp-audit`)**:
+  - Added `nspecter arp-audit <file_or_hex> [--gateway <ip>] [--json]` supporting `.pcap`, `.pcapng`, and raw packet captures with IP-to-MAC inventory, flapping alerts, threat indicators, and structured JSON output.
+- **Integration Test Suite (`tests/arp_audit_test.rs`)**:
+  - Added 7 comprehensive integration tests covering RFC 826 request/reply decoding, RFC 5227 ACD probe and announcement classification, conflicting IP ownership detection, gateway MAC flapping MITM detection, gratuitous flood detection, Ethernet L2 vs ARP SHA mismatch detection, broadcast reply RFC violations, adversarial bounds testing, and CLI execution.
+
 ## [0.12.0] - 2026-10-14
 
 ### Added

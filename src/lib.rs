@@ -8,6 +8,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod arp_audit;
 pub mod beacon;
 pub mod cli;
 pub mod commands;
