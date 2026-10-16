@@ -6,17 +6,19 @@
 </p>
 
 <p align="center">
-  <img src="../assets/locales/ru/banner.svg" alt="NetSpecter (nspecter) banner" width="100%" />
+  <img src="../assets/locales/ru/banner.svg" alt="Баннер NetSpecter (nspecter)" width="100%" />
 </p>
 
 # NetSpecter (nspecter)
 
-**Автономная криминалистика сетевых пакетов, TLS JA3-фингерпринтинг и детектор скрытых DNS-каналов на Rust**
+**Высокоскоростной движок криминалистического анализа сетевых пакетов, фингерпринтинга TLS JA3/JA4 и обнаружения скрытых каналов на чистом Rust без C-зависимостей**
 
 [![CI](https://github.com/GHSFS/net-specter/actions/workflows/ci.yml/badge.svg)](https://github.com/GHSFS/net-specter/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](./Cargo.toml)
+[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](../../Cargo.toml)
 [![Zero Unsafe](https://img.shields.io/badge/Memory_Safety-100%25_Safe_Rust-10b981.svg)](../../SECURITY.md)
+
+</div>
 
 ---
 
@@ -26,20 +28,20 @@
 <summary><b>🛡️ Обзор и ключевые возможности</b></summary>
 <br>
 
-net-specter (nspecter) — это быстрый и безопасный к памяти CLI-инструмент на чистом Rust для анализа дампов трафика PCAP, вычисления отпечатков TLS ClientHello JA3 и выявления скрытых DNS-туннелей без внешних C-библиотек.
+net-specter (nspecter) — это быстрая, безопасная по памяти утилита командной строки и библиотека на чистом Rust, предназначенная для автономного криминалистического анализа сетевых пакетов, фингерпринтинга криптографических рукопожатий и обнаружения скрытых туннелей без использования libpcap или сторонних C-биндингов.
 
-1. **Zero-Dependency PCAP & PCAPNG Capture Engine (`src/pcap.rs` & `src/pcapng.rs`)** — Decodes classic libpcap `.pcap` files across both little-endian and big-endian microsecond/nanosecond headers (`0xA1B2C3D4`, `0xA1B23C4D`), Ethernet II frames (with IEEE 802.1Q VLAN tag unwrapping), Raw IP captures (`linktype 101`), IPv4/IPv6 headers, and TCP/UDP transport segments, as well as next-generation `.pcapng` Section Header Blocks (`0x0A0D0D0A`), Interface Description Blocks, Enhanced Packet Blocks, and Simple Packet Blocks with arbitrary timestamp resolution.
-2. **TLS `ClientHello` Deep Inspector & JA3 Engine (`src/tls_ja3.rs`)** — Parses TLS Handshake (`0x16`) `ClientHello` (`0x01`) records, extracts SNI hostnames (`0x0000`), Supported Groups (`0x000a`), EC Point Formats (`0x000b`), ALPN protocols (`0x0010`), and Supported Versions (`0x002b`), filters RFC 8701 GREASE values (`0x?a?a`), and computes both **JA3 MD5** and **SHA-256** fingerprints.
-3. **DNS Wire-Format Parser & Covert Tunneling Auditor (`src/dns.rs`)** — Decodes RFC 1035 DNS packets with strict compression pointer loop protection (`<= 32` hops) and scores subdomain Shannon entropy, label lengths, and hexadecimal/Base32 payload density to flag covert C2 or data exfiltration channels (`Low`, `Elevated`, `High`).
-4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` and `.pcapng` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
-5. **JA4 & JA4S Modern TLS / QUIC Fingerprinting Engine (`src/ja4.rs`)** — Computes FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC, and DTLS transports.
-6. **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstructs bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, DoS memory limits, and multi-segment application protocol inspection (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
-7. **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Fingerprinting (`src/http_inspect.rs`)** — Parses HTTP/1.1 requests and responses, decodes HTTP/2 connection prefaces, binary frame streams, and `SETTINGS` parameters, and computes FoxIO-compliant `JA4H` client fingerprints (`nspecter http-audit`).
-8. **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`src/tls_cert.rs`)** — Extracts JA3S server response fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decodes TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) messages, provides a zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity timestamps, DNS/IP SANs, serial numbers, signature algorithms), and flags certificate anomalies (expired, not yet valid, inverted validity, weak signature algorithms, self-signed) across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit`).
-9. **QUIC Initial Packet & RFC 9001 Decryptor (`src/quic.rs`, `src/quic_crypto.rs`)** — Derives initial keys via HKDF-SHA256, unmasks RFC 9001 header protection, decrypts QUIC Initial packets with pure Rust AES-128-GCM, reassembles CRYPTO frames, and extracts TLS 1.3 JA3/JA4 fingerprints over UDP/443 (`nspecter quic-audit`).
-10. **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)** — Analyzes flow inter-arrival deltas ($Delta t$), mean/variance/median jitter, coefficient of variation ($CV$), interval frequency spectrograms, and periodicity scores to classify automated C2 heartbeats (`HighConfidenceBeacon`, `JitteredBeacon`, `SuspectInterval`, `Benign`) across PCAP and PCAPNG captures (`nspecter beacon-audit`).
-11. **BPF-Style Packet Filter Expression Engine (`src/filter/`)** — Evaluates packet filters against IPv4/IPv6 CIDRs, port ranges, transport protocols, TCP flag masks, and frame lengths (`nspecter filter`).
-12. **SSH HASSH Client & Server Key-Exchange Fingerprinting (`src/ssh_hassh.rs`)** — Parses RFC 4253 SSH banners and `SSH_MSG_KEXINIT` packets, computing Salesforce `HASSH` and `HASSHServer` MD5 and SHA-256 fingerprints across PCAP, PCAPNG, and raw byte streams (`nspecter hassh`).
+1. **Движок захвата PCAP и PCAPNG без внешних зависимостей (`src/pcap.rs` и `src/pcapng.rs`)** — Декодирует классические файлы libpcap `.pcap` в форматах little-endian и big-endian с микросекундными и наносекундными метками времени (`0xA1B2C3D4`, `0xA1B23C4D`), кадры Ethernet II (со снятием тегов VLAN IEEE 802.1Q), дампы Raw IP (`linktype 101`), заголовки IPv4/IPv6 и транспортные сегменты TCP/UDP; полностью поддерживает блоки секций следующего поколения `.pcapng` (SHB `0x0A0D0D0A`, IDB, EPB и SPB) с произвольной точностью меток времени.
+2. **Глубокий инспектор TLS `ClientHello` и движок JA3 (`src/tls_ja3.rs`)** — Выполняет разбор записей рукопожатия TLS (`0x16`) `ClientHello` (`0x01`), извлекает имена хостов SNI (`0x0000`), поддерживаемые эллиптические группы (`0x000a`), форматы точек EC (`0x000b`), протоколы ALPN (`0x0010`) и поддерживаемые версии (`0x002b`); автоматически фильтрует значения GREASE RFC 8701 (`0x?a?a`) и вычисляет хэш-отпечатки **JA3 MD5** и **SHA-256**.
+3. **Парсер проводного формата DNS и аудитор скрытых туннелей (`src/dns.rs`)** — Декодирует DNS-пакеты RFC 1035 со строгой защитой от зацикливания сжатых указателей (`<= 32` переходов) и рассчитывает энтропию Шеннона для поддоменов, длину меток и плотность шестнадцатеричной/Base32 нагрузки для выявления каналов C2 и утечки данных (`Low`, `Elevated`, `High`).
+4. **Лаборатория детерминированного синтеза пакетов (`nspecter synth-pcap`)** — Генерирует автономные многопакетные дампы `.pcap` и `.pcapng`, содержащие TLS 1.3 `ClientHello` и легитимные/скрытые DNS-запросы для воспроизводимого CI-тестирования и валидации аналитиками.
+5. **Современный движок фингерпринтинга TLS / QUIC JA4 и JA4S (`src/ja4.rs`)** — Вычисляет сортированные клиентские отпечатки JA4, совместимые с FoxIO (`t13d1516h2_<cipher_hash>_<ext_hash>`), и серверные отпечатки ответа JA4S, устойчивые к рандомизации порядка расширений TLS в протоколах TCP, QUIC и DTLS.
+6. **Реассемблирование TCP-потоков и отслеживание нарушенного порядка сегментов (`src/tcp_stream.rs`)** — Восстанавливает двунаправленные байтовые потоки TCP при фрагментации, повторной передаче и нарушении порядка пакетов с обработкой 32-битного переполнения последовательности RFC 793, защитой памяти от DoS-атак и глубоким анализом прикладных протоколов (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
+7. **Инспектор кадров HTTP/1.1 и HTTP/2 и фингерпринтинг JA4H (`src/http_inspect.rs`)** — Разбирает запросы и ответы HTTP/1.1, декодирует преамбулы соединений HTTP/2, потоки бинарных фреймов и параметры `SETTINGS`, рассчитывая клиентские отпечатки `JA4H` по спецификации FoxIO (`nspecter http-audit`).
+8. **Криминалистический анализ ServerHello JA3S и цепочек сертификатов X.509 (`src/tls_cert.rs`)** — Извлекает отпечатки ответа сервера JA3S (MD5 и SHA-256 с иммунитетом к GREASE RFC 8701), декодирует сообщения TLS 1.2 и 1.3 `Certificate` (`0x0b`); содержит независимый парсер ASN.1 DER для сертификатов X.509 и выявляет аномалии сертификатов (истекшие, преждевременные, инвертированные даты, слабые алгоритмы подписи, самоподписанные) в дампах PCAP, PCAPNG и собранных TCP-потоках (`nspecter cert-audit`).
+9. **Дешифратор начальных пакетов QUIC и RFC 9001 (`src/quic.rs`, `src/quic_crypto.rs`)** — Выводит начальные ключи через HKDF-SHA256, снимает маскировку заголовков RFC 9001, расшифровывает пакеты QUIC Initial с помощью чистого Rust AES-128-GCM, собирает фреймы CRYPTO и извлекает отпечатки TLS 1.3 JA3/JA4 поверх UDP/443 (`nspecter quic-audit`).
+10. **Детектор джиттера маяков C2 и спектрограмм периодических интервалов (`src/beacon.rs`)** — Анализирует интервалы прибытия пакетов ($Delta t$), среднее/дисперсию/медиану джиттера, коэффициент вариации ($CV$), спектрограммы частоты интервалов и оценки периодичности для классификации автоматических сигналов C2 (`HighConfidenceBeacon`, `JitteredBeacon`, `SuspectInterval`, `Benign`) в PCAP и PCAPNG (`nspecter beacon-audit`).
+11. **Движок выражений фильтрации пакетов в стиле BPF (`src/filter/`)** — Вычисляет фильтры пакетов по диапазонам CIDR IPv4/IPv6, портам, транспортным протоколам, маскам TCP-флагов и размерам кадров (`nspecter filter`).
+12. **Фингерпринтинг обмена ключами SSH HASSH для клиентов и серверов (`src/ssh_hassh.rs`)** — Разбирает идентификационные баннеры RFC 4253 и пакеты `SSH_MSG_KEXINIT`, рассчитывая отпечатки Salesforce `HASSH` и `HASSHServer` MD5 и SHA-256 в дампах PCAP, PCAPNG и потоках байтов (`nspecter hassh`).
 
 </details>
 
@@ -55,73 +57,73 @@ net-specter (nspecter) — это быстрый и безопасный к па
   <img src="../assets/locales/ru/architecture.svg" alt="Архитектура инспекции пакетов и фингерпринтинга" width="100%" />
 </p>
 
-| # | Component | Module | Responsibility |
+| # | Компонент | Модуль | Основная зона ответственности |
 |---|---|---|---|
-| **01** | **01 · Декодер захватов PCAP** | `src/pcap.rs` | Разбор заголовков Little/Big-Endian и кадров Ethernet/VLAN/IPv4/IPv6/TCP/UDP |
-| **02** | **02 · Инспектор TLS ClientHello** | `src/tls_ja3.rs` | Извлечение SNI, ALPN, эллиптических кривых и расширений TLS |
-| **03** | **03 · Движок отпечатков JA3** | `MD5 + SHA-256` | Фильтрация RFC 8701 GREASE и расчет дайджестов MD5 и SHA-256 |
-| **04** | **04 · Аудитор DNS-туннелей** | `src/dns.rs` | Защита от циклов сжатия RFC 1035 (<=32 переходов) и оценка энтропии Шеннона |
-| **05** | **05 · Генератор эталонных PCAP** | `synth-pcap & --json` | Детерминированный синтез тестовых дампов PCAP и экспорт в JSON |
+| **01** | **01 · Проводной декодер PCAP** | `src/pcap.rs` | Парсер микро/наносекундных дампов libpcap little/big-endian и декодирование Ethernet/VLAN/IPv4/IPv6/TCP/UDP |
+| **02** | **02 · Инспектор TLS ClientHello** | `src/tls_ja3.rs` | Извлечение без копирования SNI, ALPN, поддерживаемых групп, форматов точек EC и версий |
+| **03** | **03 · Криптографический отпечаток JA3** | `MD5 + SHA-256` | Фильтрация GREASE RFC 8701, построение канонических строк JA3 и расчет двойных дайджестов |
+| **04** | **04 · Аудитор DNS-туннелей** | `src/dns.rs` | Защита от зацикливания указателей RFC 1035 (<=32 шагов) и оценка C2 по энтропии Шеннона |
+| **05** | **05 · Лаборатория синтеза пакетов** | `synth-pcap & --json` | Детерминированная генерация многопакетных дампов PCAP и структурированный вывод телеметрии в JSON |
 
 </details>
 
 ---
 
-## 🚀 Быстрый старт и использование CLI
+## 🚀 Быстрый старт и примеры командной строки
 
 <details open>
-<summary><b>🚀 Быстрый старт и использование CLI</b></summary>
+<summary><b>🚀 Быстрый старт и примеры командной строки</b></summary>
 <br>
 
 ```bash
-# 1. Build the release binary
+# 1. Сборка оптимизированного исполняемого файла
 cargo build --release
 
-# 2. Generate a deterministic sample .pcap or .pcapng capture (TLS 1.3 ClientHello + DNS packets)
+# 2. Генерация детерминированного тестового дампа в формате .pcap или .pcapng (TLS 1.3 ClientHello + пакеты DNS)
 ./target/release/nspecter synth-pcap sample.pcap
 ./target/release/nspecter synth-pcap sample.pcapng --pcapng
 
-# 3. Inspect all flows, TLS JA3 handshakes, and DNS queries in a capture (.pcap or .pcapng)
+# 3. Инспекция всех потоков, TLS JA3 рукопожатий и DNS-запросов в дампе (.pcap или .pcapng)
 ./target/release/nspecter inspect-pcap sample.pcap
 ./target/release/nspecter inspect-pcap sample.pcapng --json
 
-# 4. Extract TLS ClientHello details and JA3 MD5 / SHA-256 digests from a capture or hex string
+# 4. Извлечение деталей TLS ClientHello и хэш-отпечатков JA3 MD5 / SHA-256 из дампа или шестнадцатеричной строки
 ./target/release/nspecter ja3 sample.pcapng --json
 
-# 5. Extract FoxIO JA4 client and JA4S server fingerprints from a capture or hex string
+# 5. Извлечение клиентских отпечатков FoxIO JA4 и серверных JA4S из дампа или шестнадцатеричной строки
 ./target/release/nspecter ja4 sample.pcapng --json
 
-# 6. Audit DNS packets for high-entropy covert tunneling / C2 exfiltration
+# 6. Аудит пакетов DNS на наличие скрытых туннелей с высокой энтропией и утечки данных C2
 ./target/release/nspecter dns-audit sample.pcapng --json
 
-# 7. Reassemble bidirectional TCP streams and inspect application payloads
+# 7. Реассемблирование двунаправленных потоков TCP и инспекция полезной нагрузки приложений
 ./target/release/nspecter tcp-stream sample.pcapng --json
 
-# 8. Inspect HTTP/1.1 & HTTP/2 frames and compute JA4H HTTP client fingerprints
+# 8. Инспекция кадров HTTP/1.1 и HTTP/2 и вычисление клиентских отпечатков HTTP JA4H
 ./target/release/nspecter http-audit capture.pcap --json
 
-# 9. Forensically audit TLS ServerHello JA3S fingerprints and X.509 certificate chains
+# 9. Криминалистический аудит отпечатков TLS ServerHello JA3S и цепочек сертификатов X.509
 ./target/release/nspecter cert-audit capture.pcap --json
 
-# 10. Decrypt QUIC Initial packets and extract TLS 1.3 JA3/JA4 fingerprints
+# 10. Расшифровка начальных пакетов QUIC и извлечение отпечатков TLS 1.3 JA3/JA4
 ./target/release/nspecter quic-audit capture.pcap --json
 
-# 11. Audit C2 beacon jitter and periodic interval spectrograms
+# 11. Аудит джиттера маяков C2 и спектрограмм периодических интервалов
 ./target/release/nspecter beacon-audit capture.pcap --min-events 4 --json
 
-# 12. Filter capture frames using BPF-style expressions
+# 12. Фильтрация кадров дампа с использованием выражений в стиле BPF
 ./target/release/nspecter filter capture.pcap "tcp port 443" --json
 
-# 13. Extract SSH banners, parse KEXINIT negotiations, and compute Salesforce HASSH fingerprints
+# 13. Извлечение баннеров SSH, разбор согласования KEXINIT и расчет отпечатков Salesforce HASSH
 ./target/release/nspecter hassh capture.pcap --json
 
-# 14. Audit ICMP Echo Request/Reply flows for covert tunnels and payload tampering
+# 14. Аудит потоков ICMP Echo Request/Reply на наличие скрытых каналов и подмены полезной нагрузки
 ./target/release/nspecter icmp-tunnel capture.pcap --dump-payload --json
 
-# 15. Passively fingerprint operating systems from TCP SYN packets (p0f v3 & FoxIO JA4T)
+# 15. Пассивный фингерпринтинг операционных систем по пакетам TCP SYN (p0f v3 и FoxIO JA4T)
 ./target/release/nspecter os-fp capture.pcap --json
 
-# 16. Audit ARP requests/replies for spoofing, gratuitous floods, and Layer-2 MITM anomalies
+# 16. Аудит запросов и ответов ARP на предмет спуфинга, нелегитимного флуда и аномалий MITM второго уровня
 ./target/release/nspecter arp-audit capture.pcap --gateway 192.168.1.1 --json
 ```
 
@@ -129,86 +131,86 @@ cargo build --release
 
 ---
 
-## 📦 Справочник модулей и команд
+## 📦 Справочник модулей и подкоманд
 
 <details open>
-<summary><b>📦 Справочник модулей и команд</b></summary>
+<summary><b>📦 Справочник модулей и подкоманд</b></summary>
 <br>
 
 ```text
 net-specter/
-├── Cargo.toml                     # Crate manifest (net-specter / nspecter binary)
-├── README.md                      # Primary English documentation
-├── ROADMAP.md                     # Shipped capabilities & upcoming milestones
-├── CHANGELOG.md                   # Release history
-├── SECURITY.md                    # Memory safety & parser security policy
-├── LICENSE                        # Apache-2.0 License
-├── NOTICE                         # Attribution notice (GHSFS)
+├── Cargo.toml                     # Манифест пакета (библиотека net-specter и бинарный файл nspecter)
+├── README.md                      # Основная документация на английском языке
+├── ROADMAP.md                     # Реализованный функционал и план будущего развития
+├── CHANGELOG.md                   # История версий и обновлений
+├── SECURITY.md                    # Политика безопасности памяти и сообщения об уязвимостях
+├── LICENSE                        # Лицензия Apache-2.0
+├── NOTICE                         # Уведомление об авторских правах (GHSFS)
 ├── src/
-│   ├── lib.rs                     # Public library exports
-│   ├── main.rs                    # CLI entrypoint (<25L dispatcher)
-│   ├── cli.rs                     # Clap subcommand definitions
-│   ├── error.rs                   # Unified SpecterError & Result<T>
-│   ├── commands/                  # Modular CLI command handlers (arp, inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh, icmp, os_fp)
-│   ├── filter/                    # BPF-style recursive-descent filter parser & evaluator
-│   ├── arp_audit.rs               # RFC 826 / RFC 5227 ARP spoofing & Layer-2 MITM detector
-│   ├── p0f/                       # Passive OS fingerprinting & FoxIO JA4T/JA4TS engine
-│   ├── icmp_tunnel.rs             # ICMP Echo covert tunnel & payload tampering detector
-│   ├── beacon.rs                  # C2 beacon jitter & interval spectrogram detector
-│   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
-│   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
-│   ├── quic.rs                    # QUIC Initial packet & CRYPTO stream extractor
-│   ├── quic_crypto.rs             # Pure Rust HKDF-SHA256, AES-128 & GCM decryptor
-│   ├── ssh_hassh.rs               # SSH-2.0 banner & Salesforce HASSH/HASSHServer engine
-│   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
-│   ├── tls_cert.rs                # TLS ServerHello JA3S, TLS 1.2/1.3 Certs & X.509 ASN.1 parser
-│   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
-│   ├── tcp_stream.rs              # Stateful TCP stream reassembly & out-of-order tracker
-│   ├── http_inspect.rs            # HTTP/1.1, HTTP/2 SETTINGS frame & JA4H fingerprint engine
-│   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
+│   ├── lib.rs                     # Экспорт публичного интерфейса библиотеки
+│   ├── main.rs                    # Главная точка входа CLI (компактный диспетчер <25 строк)
+│   ├── cli.rs                     # Определение подкоманд и аргументов Clap
+│   ├── error.rs                   # Единая модель ошибок SpecterError и Result<T>
+│   ├── commands/                  # Модульные обработчики команд CLI (arp, inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh, icmp, os_fp)
+│   ├── filter/                    # Парсер рекурсивного спуска и оценщик фильтров в стиле BPF
+│   ├── arp_audit.rs               # Детектор ARP-спуфинга RFC 826 / RFC 5227 и атак MITM на уровне L2
+│   ├── p0f/                       # Движок пассивного фингерпринтинга ОС и FoxIO JA4T/JA4TS
+│   ├── icmp_tunnel.rs             # Детектор скрытых туннелей ICMP Echo и модификации данных
+│   ├── beacon.rs                  # Детектор джиттера маяков C2 и спектрограмм интервалов
+│   ├── pcap.rs                    # Декодер libpcap .pcap, парсер уровней L2/L3/L4 и генератор
+│   ├── pcapng.rs                  # Парсер блоков структуры PCAPNG (SHB/IDB/EPB/SPB) и генератор
+│   ├── quic.rs                    # Модуль извлечения пакетов QUIC Initial и потоков CRYPTO
+│   ├── quic_crypto.rs             # Дешифратор HKDF-SHA256, AES-128 и GCM на чистом Rust
+│   ├── ssh_hassh.rs               # Баннеры SSH-2.0 и движок отпечатков Salesforce HASSH/HASSHServer
+│   ├── tls_ja3.rs                 # Парсер TLS ClientHello, фильтр GREASE и движок JA3
+│   ├── tls_cert.rs                # Парсер TLS ServerHello JA3S, сертификатов TLS 1.2/1.3 и ASN.1 X.509
+│   ├── ja4.rs                     # Современный движок клиентских отпечатков FoxIO JA4 и серверных JA4S
+│   ├── tcp_stream.rs              # Сборка TCP-потоков с сохранением состояния и контролем порядка
+│   ├── http_inspect.rs            # Анализатор HTTP/1.1, фреймов HTTP/2 SETTINGS и движок отпечатков JA4H
+│   └── dns.rs                     # Декодер DNS RFC 1035 и аудитор скрытых туннелей по энтропии Шеннона
 └── tests/
-    ├── arp_audit_test.rs          # ARP spoofing, gateway flapping & gratuitous flood tests
-    ├── p0f_test.rs                # TCP SYN passive OS & FoxIO JA4T integration tests
-    ├── icmp_tunnel_test.rs        # ICMP covert tunnel & Shannon entropy integration tests
-    ├── beacon_test.rs             # C2 beacon jitter, spectrogram & classification tests
-    ├── filter_test.rs             # BPF-style packet filter expression tests
-    ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
-    ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
-    ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
-    ├── quic_test.rs               # RFC 9001 HKDF, AES-GCM & QUIC Initial decrypt tests
-    ├── ssh_hassh_test.rs          # SSH banner, KEXINIT & Salesforce HASSH tests
-    ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
-    ├── http_inspect_test.rs       # HTTP/1.1, HTTP/2 frames & JA4H integration tests
-    ├── tls_cert_test.rs           # ServerHello JA3S, X.509 ASN.1 DER & anomaly integration tests
-    └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
+    ├── arp_audit_test.rs          # Интеграционные тесты ARP-спуфинга, смены шлюза и аномального флуда
+    ├── p0f_test.rs                # Тесты пассивного фингерпринтинга ОС по TCP SYN и FoxIO JA4T
+    ├── icmp_tunnel_test.rs        # Тесты скрытых туннелей ICMP и анализа энтропии Шеннона
+    ├── beacon_test.rs             # Тесты анализа джиттера маяков C2, спектрограмм и классификации
+    ├── filter_test.rs             # Тесты вычисления выражений фильтрации пакетов в стиле BPF
+    ├── pcap_tls_test.rs           # Тесты разбора PCAP, L2-L4, фильтрации GREASE и отпечатков JA3
+    ├── pcapng_test.rs             # Тесты блоков PCAPNG, наносекундных меток времени и CLI
+    ├── ja4_test.rs                # Тесты отпечатков JA4/JA4S, пакетов QUIC Initial и защиты от GREASE
+    ├── quic_test.rs               # Тесты вывода ключей HKDF RFC 9001, AES-GCM и дешифровки QUIC
+    ├── ssh_hassh_test.rs          # Тесты заголовков SSH, согласования KEXINIT и Salesforce HASSH
+    ├── tcp_stream_test.rs         # Тесты сборки TCP-потоков и анализа многосегментного TLS
+    ├── http_inspect_test.rs       # Тесты кадров HTTP/1.1, HTTP/2 и фингерпринтинга JA4H
+    ├── tls_cert_test.rs           # Тесты ServerHello JA3S, ASN.1 DER X.509 и обнаружения аномалий
+    └── dns_audit_test.rs          # Тесты защиты от циклов сжатия DNS и аудита скрытых туннелей
 ```
 
-See [ROADMAP.md](../../ROADMAP.md) for planned transport and protocol forensics capabilities.
+Запланированные возможности сетевого анализа и поддержки протоколов приведены в [ROADMAP.md](../../ROADMAP.md).
 
 </details>
 
 ---
 
-## 🔒 Безопасность памяти и защита парсера
+## 🔒 Безопасность памяти и защита парсеров
 
 <details open>
-<summary><b>🔒 Безопасность памяти и защита парсера</b></summary>
+<summary><b>🔒 Безопасность памяти и защита парсеров</b></summary>
 <br>
 
-- **100% Safe Rust**: Zero `unsafe` blocks across all binary frame decoders.
-- **RFC 1035 Compression Loop Defense**: DNS name decompression enforces a strict 32-hop pointer ceiling and forward/self-pointer rejection.
-- **Transient Buffer Zeroization**: Ephemeral TLS random, session ID, and reassembly byte buffers are wiped on drop via `zeroize`.
-- **DoS-Resistant Segment Buffering**: Out-of-order TCP segment queuing enforces bounded per-stream memory quotas to prevent memory exhaustion from fragmented segment floods.
-- **Policy & Vulnerability Reporting**: Refer to [SECURITY.md](../../SECURITY.md).
+- **100% безопасный Rust**: Ни единого блока `unsafe` во всех модулях декодирования бинарных фреймов.
+- **Защита от циклов сжатия RFC 1035**: Распаковка имен DNS ограничивается строгим лимитом в 32 перехода по указателям с немедленным отклонением прямых и циклических ссылок.
+- **Безопасное обнуление временных буферов**: При выходе из области видимости буферы со случайными данными TLS, ID сессий и байтами реассемблирования надежно стираются через `zeroize`.
+- **Буферизация сегментов с защитой от DoS**: Очередь неупорядоченных сегментов TCP использует фиксированные квоты памяти на поток, исключая исчерпание ОЗУ при атаках фрагментированным флудом.
+- **Политика безопасности и сообщение об уязвимостях**: См. [SECURITY.md](../../SECURITY.md).
 
 </details>
 
 ---
 
-## 📄 Лицензия и авторство
+## 📄 Лицензия и авторские права
 
 <details open>
-<summary><b>📄 Лицензия и авторство</b></summary>
+<summary><b>📄 Лицензия и авторские права</b></summary>
 <br>
 
 ```text
