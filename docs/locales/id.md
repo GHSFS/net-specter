@@ -6,122 +6,124 @@
 </p>
 
 <p align="center">
-  <img src="../assets/locales/id/banner.svg" alt="NetSpecter (nspecter) banner" width="100%" />
+  <img src="../assets/locales/id/banner.svg" alt="Banner NetSpecter (nspecter)" width="100%" />
 </p>
 
 # NetSpecter (nspecter)
 
-**Forensik Paket Jaringan Tanpa Dependensi, Sidik Jari TLS JA3/JA4 & Detektor Kanal Tersembunyi di Rust**
+**Mesin forensik paket jaringan, sidik jari kriptografi TLS JA3/JA4, dan pendeteksi saluran tersembunyi murni berbahasa Rust tanpa dependensi C eksternal**
 
 [![CI](https://github.com/GHSFS/net-specter/actions/workflows/ci.yml/badge.svg)](https://github.com/GHSFS/net-specter/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](./Cargo.toml)
+[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](../../Cargo.toml)
 [![Zero Unsafe](https://img.shields.io/badge/Memory_Safety-100%25_Safe_Rust-10b981.svg)](../../SECURITY.md)
+
+</div>
 
 ---
 
-## 🛡️ Ringkasan dan Kemampuan Utama
+## 🛡️ Gambaran Umum dan Kemampuan Inti
 
 <details open>
-<summary><b>🛡️ Ringkasan dan Kemampuan Utama</b></summary>
+<summary><b>🛡️ Gambaran Umum dan Kemampuan Inti</b></summary>
 <br>
 
-net-specter (nspecter) adalah utilitas baris perintah dan pustaka Rust murni yang aman memori untuk forensik paket jaringan offline, ekstraksi sidik jari TLS JA3, dan deteksi tunneling DNS tersembunyi tanpa pustaka C eksternal.
+net-specter (nspecter) adalah utilitas baris perintah dan pustaka Rust murni yang sangat cepat dan aman dari kebocoran memori, dirancang untuk forensik paket jaringan luring, ekstraksi sidik jari kriptografi jabat tangan (handshake), dan pendeteksian terowongan tersembunyi tanpa dependensi libpcap atau pengikat C eksternal.
 
-1. **Zero-Dependency PCAP & PCAPNG Capture Engine (`src/pcap.rs` & `src/pcapng.rs`)** — Decodes classic libpcap `.pcap` files across both little-endian and big-endian microsecond/nanosecond headers (`0xA1B2C3D4`, `0xA1B23C4D`), Ethernet II frames (with IEEE 802.1Q VLAN tag unwrapping), Raw IP captures (`linktype 101`), IPv4/IPv6 headers, and TCP/UDP transport segments, as well as next-generation `.pcapng` Section Header Blocks (`0x0A0D0D0A`), Interface Description Blocks, Enhanced Packet Blocks, and Simple Packet Blocks with arbitrary timestamp resolution.
-2. **TLS `ClientHello` Deep Inspector & JA3 Engine (`src/tls_ja3.rs`)** — Parses TLS Handshake (`0x16`) `ClientHello` (`0x01`) records, extracts SNI hostnames (`0x0000`), Supported Groups (`0x000a`), EC Point Formats (`0x000b`), ALPN protocols (`0x0010`), and Supported Versions (`0x002b`), filters RFC 8701 GREASE values (`0x?a?a`), and computes both **JA3 MD5** and **SHA-256** fingerprints.
-3. **DNS Wire-Format Parser & Covert Tunneling Auditor (`src/dns.rs`)** — Decodes RFC 1035 DNS packets with strict compression pointer loop protection (`<= 32` hops) and scores subdomain Shannon entropy, label lengths, and hexadecimal/Base32 payload density to flag covert C2 or data exfiltration channels (`Low`, `Elevated`, `High`).
-4. **Deterministic Capture Synthesis (`nspecter synth-pcap`)** — Generates self-contained multi-packet `.pcap` and `.pcapng` captures containing TLS 1.3 `ClientHello` and benign/covert DNS queries for reproducible CI testing and analyst validation.
-5. **JA4 & JA4S Modern TLS / QUIC Fingerprinting Engine (`src/ja4.rs`)** — Computes FoxIO-compatible sorted JA4 client fingerprints (`t13d1516h2_<cipher_hash>_<ext_hash>`) and JA4S server response fingerprints resilient to TLS extension order randomization across TCP, QUIC, and DTLS transports.
-6. **TCP Stream Reassembly & Out-of-Order Segment Tracker (`src/tcp_stream.rs`)** — Reconstructs bidirectional TCP byte streams across fragmented, retransmitted, and out-of-order segments with RFC 793 32-bit sequence wrap-around, DoS memory limits, and multi-segment application protocol inspection (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
-7. **HTTP/1.1 & HTTP/2 Frame Inspector & JA4H Fingerprinting (`src/http_inspect.rs`)** — Parses HTTP/1.1 requests and responses, decodes HTTP/2 connection prefaces, binary frame streams, and `SETTINGS` parameters, and computes FoxIO-compliant `JA4H` client fingerprints (`nspecter http-audit`).
-8. **TLS ServerHello JA3S & X.509 Certificate Chain Forensics (`src/tls_cert.rs`)** — Extracts JA3S server response fingerprints (MD5 and SHA-256 with RFC 8701 GREASE immunity), decodes TLS 1.2 and TLS 1.3 `Certificate` (`0x0b`) messages, provides a zero-dependency ASN.1 DER parser for X.509 certificates (Subject/Issuer DN, validity timestamps, DNS/IP SANs, serial numbers, signature algorithms), and flags certificate anomalies (expired, not yet valid, inverted validity, weak signature algorithms, self-signed) across PCAP, PCAPNG, and reassembled TCP streams (`nspecter cert-audit`).
-9. **QUIC Initial Packet & RFC 9001 Decryptor (`src/quic.rs`, `src/quic_crypto.rs`)** — Derives initial keys via HKDF-SHA256, unmasks RFC 9001 header protection, decrypts QUIC Initial packets with pure Rust AES-128-GCM, reassembles CRYPTO frames, and extracts TLS 1.3 JA3/JA4 fingerprints over UDP/443 (`nspecter quic-audit`).
-10. **C2 Beacon Jitter & Periodic Interval Spectrogram Detector (`src/beacon.rs`)** — Analyzes flow inter-arrival deltas ($Delta t$), mean/variance/median jitter, coefficient of variation ($CV$), interval frequency spectrograms, and periodicity scores to classify automated C2 heartbeats (`HighConfidenceBeacon`, `JitteredBeacon`, `SuspectInterval`, `Benign`) across PCAP and PCAPNG captures (`nspecter beacon-audit`).
-11. **BPF-Style Packet Filter Expression Engine (`src/filter/`)** — Evaluates packet filters against IPv4/IPv6 CIDRs, port ranges, transport protocols, TCP flag masks, and frame lengths (`nspecter filter`).
-12. **SSH HASSH Client & Server Key-Exchange Fingerprinting (`src/ssh_hassh.rs`)** — Parses RFC 4253 SSH banners and `SSH_MSG_KEXINIT` packets, computing Salesforce `HASSH` and `HASSHServer` MD5 and SHA-256 fingerprints across PCAP, PCAPNG, and raw byte streams (`nspecter hassh`).
+1. **Mesin Penangkapan PCAP & PCAPNG Tanpa Dependensi (`src/pcap.rs` & `src/pcapng.rs`)** — Mendekode berkas libpcap `.pcap` klasik dalam format little-endian dan big-endian dengan stempel waktu mikrodetik dan nanodetik (`0xA1B2C3D4`, `0xA1B23C4D`), bingkai Ethernet II (dengan pembongkaran tag VLAN IEEE 802.1Q), tangkapan Raw IP (`linktype 101`), tajuk IPv4/IPv6, dan segmen transport TCP/UDP. Mendukung penuh blok tajuk bagian generasi berikutnya `.pcapng` (SHB `0x0A0D0D0A`), blok deskripsi antarmuka (IDB), blok paket yang disempurnakan (EPB), dan blok paket sederhana (SPB) dengan resolusi waktu arbitrer.
+2. **Inspektur Mendalam TLS `ClientHello` & Mesin JA3 (`src/tls_ja3.rs`)** — Mengurai rekaman jabat tangan TLS (`0x16`) `ClientHello` (`0x01`), mengekstrak nama host SNI (`0x0000`), kelompok kurva yang didukung (`0x000a`), format titik EC (`0x000b`), protokol ALPN (`0x0010`), dan versi yang didukung (`0x002b`). Menyaring nilai GREASE RFC 8701 (`0x?a?a`) secara otomatis serta menghitung intisari sidik jari **JA3 MD5** dan **SHA-256**.
+3. **Pengurai Format Kawat DNS & Auditor Terowongan Tersembunyi (`src/dns.rs`)** — Mendekode paket DNS RFC 1035 dengan perlindungan ketat terhadap loop penunjuk terkompresi (`<= 32` lompatan) serta menilai entropi Shannon subdomain, panjang label, dan kepadatan muatan heksadesimal/Base32 untuk menandai saluran C2 tersembunyi atau penyelundupan data (`Low`, `Elevated`, `High`).
+4. **Laboratorium Sintesis Paket Deterministik (`nspecter synth-pcap`)** — Menghasilkan tangkapan mandiri multi-paket `.pcap` dan `.pcapng` yang berisi TLS 1.3 `ClientHello` dan kueri DNS normal atau tersembunyi untuk pengujian CI otomatis yang dapat direproduksi dan validasi analis.
+5. **Mesin Sidik Jari TLS / QUIC Modern JA4 & JA4S (`src/ja4.rs`)** — Menghasilkan sidik jari klien JA4 terurut yang kompatibel dengan FoxIO (`t13d1516h2_<cipher_hash>_<ext_hash>`) dan sidik jari respons server JA4S yang kebal terhadap pengacakan urutan ekstensi TLS di seluruh transportasi TCP, QUIC, dan DTLS.
+6. **Perakitan Ulang Aliran TCP & Pelacak Segmen di Luar Urutan (`src/tcp_stream.rs`)** — Merekonstruksi aliran byte TCP dua arah pada segmen yang terfragmentasi, dikirim ulang, dan tidak berurutan dengan penanganan perputaran urutan 32-bit RFC 793, batas memori anti-serangan DoS, dan inspeksi protokol aplikasi multi-segmen (TLS JA3/JA4, HTTP/1.1, HTTP/2, SSH).
+7. **Inspektur Bingkai HTTP/1.1 & HTTP/2 serta Sidik Jari JA4H (`src/http_inspect.rs`)** — Mengurai permintaan dan tanggapan HTTP/1.1, mendekode mukadimah koneksi HTTP/2, aliran bingkai biner, dan parameter `SETTINGS`, serta menghitung sidik jari klien `JA4H` yang patuh pada standar FoxIO (`nspecter http-audit`).
+8. **Analisis Forensik ServerHello JA3S & Rantai Sertifikat X.509 (`src/tls_cert.rs`)** — Mengekstrak sidik jari respons server JA3S (MD5 dan SHA-256 dengan kekebalan terhadap GREASE RFC 8701), mendekode pesan `Certificate` (`0x0b`) TLS 1.2 dan 1.3; menyediakan pengurai ASN.1 DER mandiri untuk sertifikat X.509 dan mendeteksi anomali sertifikat (kedaluwarsa, belum berlaku, tanggal terbalik, algoritma tanda tangan lemah, ditandatangani sendiri) pada tangkapan PCAP, PCAPNG, dan aliran TCP yang dirakit ulang (`nspecter cert-audit`).
+9. **Dekriptor Paket Awal QUIC & RFC 9001 (`src/quic.rs`, `src/quic_crypto.rs`)** — Menurunkan kunci awal melalui HKDF-SHA256, membuka topeng perlindungan tajuk RFC 9001, mendekripsi paket QUIC Initial menggunakan AES-128-GCM murni berbahasa Rust, merakit kembali bingkai CRYPTO, dan mengekstrak sidik jari TLS 1.3 JA3/JA4 di atas UDP/443 (`nspecter quic-audit`).
+10. **Pendeteksi Variasi (Jitter) Sinyal Suar C2 & Spektrogram Interval Berkala (`src/beacon.rs`)** — Menganalisis jeda waktu antar kedatangan paket ($Delta t$), variasi rata-rata/varians/median, koefisien variasi ($CV$), spektrogram frekuensi interval, dan skor periodisitas untuk mengklasifikasikan detak jantung otomatis C2 (`HighConfidenceBeacon`, `JitteredBeacon`, `SuspectInterval`, `Benign`) dalam PCAP dan PCAPNG (`nspecter beacon-audit`).
+11. **Mesin Evaluasi Ekspresi Penyaring Gaya BPF (`src/filter/`)** — Mengevaluasi ekspresi penyaring paket terhadap blok CIDR IPv4/IPv6, rentang port, protokol transportasi, masker bendera TCP, dan panjang bingkai (`nspecter filter`).
+12. **Sidik Jari Pertukaran Kunci SSH HASSH Klien & Server (`src/ssh_hassh.rs`)** — Mengurai spanduk identifikasi RFC 4253 dan paket `SSH_MSG_KEXINIT`, menghitung sidik jari MD5 dan SHA-256 Salesforce `HASSH` dan `HASSHServer` pada tangkapan PCAP, PCAPNG, dan aliran byte mentah (`nspecter hassh`).
 
 </details>
 
 ---
 
-## 🏛️ Arsitektur Inspeksi Paket dan Sidik Jari
+## 🏛️ Arsitektur Inspeksi Paket dan Sidik Jari Kriptografi
 
 <details open>
-<summary><b>🏛️ Arsitektur Inspeksi Paket dan Sidik Jari</b></summary>
+<summary><b>🏛️ Arsitektur Inspeksi Paket dan Sidik Jari Kriptografi</b></summary>
 <br>
 
 <p align="center">
-  <img src="../assets/locales/id/architecture.svg" alt="Arsitektur Inspeksi Paket dan Sidik Jari" width="100%" />
+  <img src="../assets/locales/id/architecture.svg" alt="Arsitektur Inspeksi Paket dan Sidik Jari Kriptografi" width="100%" />
 </p>
 
-| # | Component | Module | Responsibility |
+| # | Komponen | Modul | Tanggung Jawab Utama |
 |---|---|---|---|
-| **01** | **01 · Dekoder PCAP** | `src/pcap.rs` | Parser PCAP Little/Big-Endian serta frame Ethernet/VLAN/IPv4/IPv6/TCP/UDP |
-| **02** | **02 · Inspektur TLS ClientHello** | `src/tls_ja3.rs` | Ekstraksi SNI, ALPN, grup kurva eliptik, dan ekstensi versi TLS |
-| **03** | **03 · Mesin Sidik Jari JA3** | `MD5 + SHA-256` | Penyaringan GREASE RFC 8701 serta perhitungan hash MD5 dan SHA-256 |
-| **04** | **04 · Auditor Tunneling DNS** | `src/dns.rs` | Batas lompatan pointer RFC 1035 (<=32 hop) dan skor entropi Shannon |
-| **05** | **05 · Generator PCAP Sintetis** | `synth-pcap & --json` | Pembuatan sampel PCAP deterministik dan keluaran JSON terstruktur |
+| **01** | **01 · Dekoder Kawat PCAP** | `src/pcap.rs` | Pengurai libpcap mikro/nanodetik little/big-endian dan pendekodean Ethernet/VLAN/IPv4/IPv6/TCP/UDP |
+| **02** | **02 · Inspektur TLS ClientHello** | `src/tls_ja3.rs` | Ekstraksi tanpa salin untuk SNI, ALPN, kelompok kurva yang didukung, format EC, dan versi |
+| **03** | **03 · Sidik Jari Kriptografi JA3** | `MD5 + SHA-256` | Penyaringan GREASE RFC 8701, pembuatan string kanonik JA3, dan kalkulasi intisari ganda |
+| **04** | **04 · Auditor Terowongan DNS** | `src/dns.rs` | Perlindungan loop penunjuk RFC 1035 (<=32 lompatan) dan penilaian C2 berbasis entropi Shannon |
+| **05** | **05 · Laboratorium Sintesis Paket** | `synth-pcap & --json` | Generator deterministik PCAP multi-paket dan keluaran telemetri terstruktur dalam JSON |
 
 </details>
 
 ---
 
-## 🚀 Mulai Cepat dan Penggunaan CLI
+## 🚀 Panduan Memulai Cepat dan Perintah CLI
 
 <details open>
-<summary><b>🚀 Mulai Cepat dan Penggunaan CLI</b></summary>
+<summary><b>🚀 Panduan Memulai Cepat dan Perintah CLI</b></summary>
 <br>
 
 ```bash
-# 1. Build the release binary
+# 1. Kompilasi biner rilis teroptimasi
 cargo build --release
 
-# 2. Generate a deterministic sample .pcap or .pcapng capture (TLS 1.3 ClientHello + DNS packets)
+# 2. Hasilkan berkas tangkapan sampel deterministik dalam format .pcap atau .pcapng (TLS 1.3 ClientHello + paket DNS)
 ./target/release/nspecter synth-pcap sample.pcap
 ./target/release/nspecter synth-pcap sample.pcapng --pcapng
 
-# 3. Inspect all flows, TLS JA3 handshakes, and DNS queries in a capture (.pcap or .pcapng)
+# 3. Periksa semua aliran, jabat tangan TLS JA3, dan kueri DNS dalam tangkapan (.pcap atau .pcapng)
 ./target/release/nspecter inspect-pcap sample.pcap
 ./target/release/nspecter inspect-pcap sample.pcapng --json
 
-# 4. Extract TLS ClientHello details and JA3 MD5 / SHA-256 digests from a capture or hex string
+# 4. Ekstrak rincian TLS ClientHello dan intisari JA3 MD5 / SHA-256 dari tangkapan atau string heksadesimal
 ./target/release/nspecter ja3 sample.pcapng --json
 
-# 5. Extract FoxIO JA4 client and JA4S server fingerprints from a capture or hex string
+# 5. Ekstrak sidik jari klien FoxIO JA4 dan server JA4S dari tangkapan atau string heksadesimal
 ./target/release/nspecter ja4 sample.pcapng --json
 
-# 6. Audit DNS packets for high-entropy covert tunneling / C2 exfiltration
+# 6. Audit paket DNS untuk mendeteksi terowongan tersembunyi berentropi tinggi dan eksfiltrasi C2
 ./target/release/nspecter dns-audit sample.pcapng --json
 
-# 7. Reassemble bidirectional TCP streams and inspect application payloads
+# 7. Rakit kembali aliran TCP dua arah dan periksa muatan data aplikasi
 ./target/release/nspecter tcp-stream sample.pcapng --json
 
-# 8. Inspect HTTP/1.1 & HTTP/2 frames and compute JA4H HTTP client fingerprints
+# 8. Periksa bingkai HTTP/1.1 dan HTTP/2 serta hitung sidik jari klien HTTP JA4H
 ./target/release/nspecter http-audit capture.pcap --json
 
-# 9. Forensically audit TLS ServerHello JA3S fingerprints and X.509 certificate chains
+# 9. Lakukan audit forensik sidik jari TLS ServerHello JA3S dan rantai sertifikat X.509
 ./target/release/nspecter cert-audit capture.pcap --json
 
-# 10. Decrypt QUIC Initial packets and extract TLS 1.3 JA3/JA4 fingerprints
+# 10. Dekripsi paket awal QUIC dan ekstrak sidik jari TLS 1.3 JA3/JA4
 ./target/release/nspecter quic-audit capture.pcap --json
 
-# 11. Audit C2 beacon jitter and periodic interval spectrograms
+# 11. Audit variasi (jitter) sinyal suar C2 dan spektrogram interval berkala
 ./target/release/nspecter beacon-audit capture.pcap --min-events 4 --json
 
-# 12. Filter capture frames using BPF-style expressions
+# 12. Saring bingkai tangkapan menggunakan ekspresi bergaya BPF
 ./target/release/nspecter filter capture.pcap "tcp port 443" --json
 
-# 13. Extract SSH banners, parse KEXINIT negotiations, and compute Salesforce HASSH fingerprints
+# 13. Ekstrak spanduk SSH, urai negosiasi KEXINIT, dan hitung sidik jari Salesforce HASSH
 ./target/release/nspecter hassh capture.pcap --json
 
-# 14. Audit ICMP Echo Request/Reply flows for covert tunnels and payload tampering
+# 14. Audit aliran ICMP Echo Request/Reply untuk mendeteksi terowongan dan perusakan muatan data
 ./target/release/nspecter icmp-tunnel capture.pcap --dump-payload --json
 
-# 15. Passively fingerprint operating systems from TCP SYN packets (p0f v3 & FoxIO JA4T)
+# 15. Identifikasi sistem operasi secara pasif dari paket TCP SYN (p0f v3 dan FoxIO JA4T)
 ./target/release/nspecter os-fp capture.pcap --json
 
-# 16. Audit ARP requests/replies for spoofing, gratuitous floods, and Layer-2 MITM anomalies
+# 16. Audit permintaan dan tanggapan ARP untuk mendeteksi spoofing, banjir gratifikasi, dan anomali MITM L2
 ./target/release/nspecter arp-audit capture.pcap --gateway 192.168.1.1 --json
 ```
 
@@ -129,77 +131,77 @@ cargo build --release
 
 ---
 
-## 📦 Referensi Modul dan Subperintah
+## 📦 Referensi Modul dan Sub-Perintah
 
 <details open>
-<summary><b>📦 Referensi Modul dan Subperintah</b></summary>
+<summary><b>📦 Referensi Modul dan Sub-Perintah</b></summary>
 <br>
 
 ```text
 net-specter/
-├── Cargo.toml                     # Crate manifest (net-specter / nspecter binary)
-├── README.md                      # Primary English documentation
-├── ROADMAP.md                     # Shipped capabilities & upcoming milestones
-├── CHANGELOG.md                   # Release history
-├── SECURITY.md                    # Memory safety & parser security policy
-├── LICENSE                        # Apache-2.0 License
-├── NOTICE                         # Attribution notice (GHSFS)
+├── Cargo.toml                     # Manifes crate (pustaka net-specter dan biner nspecter)
+├── README.md                      # Dokumentasi utama dalam bahasa Inggris
+├── ROADMAP.md                     # Fitur yang telah selesai dan peta jalan pengembangan masa depan
+├── CHANGELOG.md                   # Riwayat rilis versi
+├── SECURITY.md                    # Keamanan memori dan kebijakan pelaporan kerentanan
+├── LICENSE                        # Lisensi Apache-2.0
+├── NOTICE                         # Pemberitahuan atribusi dan hak cipta (GHSFS)
 ├── src/
-│   ├── lib.rs                     # Public library exports
-│   ├── main.rs                    # CLI entrypoint (<25L dispatcher)
-│   ├── cli.rs                     # Clap subcommand definitions
-│   ├── error.rs                   # Unified SpecterError & Result<T>
-│   ├── commands/                  # Modular CLI command handlers (arp, inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh, icmp, os_fp)
-│   ├── filter/                    # BPF-style recursive-descent filter parser & evaluator
-│   ├── arp_audit.rs               # RFC 826 / RFC 5227 ARP spoofing & Layer-2 MITM detector
-│   ├── p0f/                       # Passive OS fingerprinting & FoxIO JA4T/JA4TS engine
-│   ├── icmp_tunnel.rs             # ICMP Echo covert tunnel & payload tampering detector
-│   ├── beacon.rs                  # C2 beacon jitter & interval spectrogram detector
-│   ├── pcap.rs                    # Libpcap .pcap decoder, L2/L3/L4 parser & generator
-│   ├── pcapng.rs                  # PCAPNG block parser (SHB/IDB/EPB/SPB) & generator
-│   ├── quic.rs                    # QUIC Initial packet & CRYPTO stream extractor
-│   ├── quic_crypto.rs             # Pure Rust HKDF-SHA256, AES-128 & GCM decryptor
-│   ├── ssh_hassh.rs               # SSH-2.0 banner & Salesforce HASSH/HASSHServer engine
-│   ├── tls_ja3.rs                 # TLS ClientHello parser, GREASE filter & JA3 engine
-│   ├── tls_cert.rs                # TLS ServerHello JA3S, TLS 1.2/1.3 Certs & X.509 ASN.1 parser
-│   ├── ja4.rs                     # Modern FoxIO JA4 client & JA4S server fingerprint engine
-│   ├── tcp_stream.rs              # Stateful TCP stream reassembly & out-of-order tracker
-│   ├── http_inspect.rs            # HTTP/1.1, HTTP/2 SETTINGS frame & JA4H fingerprint engine
-│   └── dns.rs                     # RFC 1035 DNS decoder & Shannon entropy tunnel auditor
+│   ├── lib.rs                     # Ekspor antarmuka pustaka publik
+│   ├── main.rs                    # Titik masuk utama CLI (dispatcher ringkas <25 baris)
+│   ├── cli.rs                     # Definisi sub-perintah dan argumen Clap
+│   ├── error.rs                   # Model kesalahan terpadu SpecterError dan Result<T>
+│   ├── commands/                  # Penangan modular perintah CLI (arp, inspect, tls, dns, tcp, http, cert, quic, synth, beacon, filter, hassh, icmp, os_fp)
+│   ├── filter/                    # Pengurai dan pengevaluasi ekspresi penyaring bergaya BPF
+│   ├── arp_audit.rs               # Pendeteksi pemalsuan ARP RFC 826 / RFC 5227 dan MITM Layer-2
+│   ├── p0f/                       # Mesin sidik jari pasif OS dan FoxIO JA4T/JA4TS
+│   ├── icmp_tunnel.rs             # Pendeteksi terowongan tersembunyi ICMP Echo dan perusakan data
+│   ├── beacon.rs                  # Pendeteksi variasi suar C2 dan spektrogram interval
+│   ├── pcap.rs                    # Dekoder libpcap .pcap, pengurai L2/L3/L4 dan generator
+│   ├── pcapng.rs                  # Pengurai blok struktur PCAPNG (SHB/IDB/EPB/SPB) dan generator
+│   ├── quic.rs                    # Pengekstrak paket QUIC Initial dan aliran CRYPTO
+│   ├── quic_crypto.rs             # Dekriptor HKDF-SHA256, AES-128 dan GCM murni berbahasa Rust
+│   ├── ssh_hassh.rs               # Spanduk identifikasi SSH-2.0 dan mesin Salesforce HASSH/HASSHServer
+│   ├── tls_ja3.rs                 # Pengurai TLS ClientHello, penyaring GREASE dan mesin JA3
+│   ├── tls_cert.rs                # TLS ServerHello JA3S, sertifikat TLS 1.2/1.3 dan pengurai ASN.1 X.509
+│   ├── ja4.rs                     # Mesin sidik jari modern FoxIO JA4 klien dan JA4S server
+│   ├── tcp_stream.rs              # Perakitan ulang aliran TCP dan pelacak segmen tidak berurutan
+│   ├── http_inspect.rs            # Pengurai HTTP/1.1, bingkai HTTP/2 SETTINGS dan mesin JA4H
+│   └── dns.rs                     # Dekoder DNS RFC 1035 dan auditor terowongan berbasis entropi Shannon
 └── tests/
-    ├── arp_audit_test.rs          # ARP spoofing, gateway flapping & gratuitous flood tests
-    ├── p0f_test.rs                # TCP SYN passive OS & FoxIO JA4T integration tests
-    ├── icmp_tunnel_test.rs        # ICMP covert tunnel & Shannon entropy integration tests
-    ├── beacon_test.rs             # C2 beacon jitter, spectrogram & classification tests
-    ├── filter_test.rs             # BPF-style packet filter expression tests
-    ├── pcap_tls_test.rs           # PCAP, L2/L3/L4, GREASE & JA3 integration tests
-    ├── pcapng_test.rs             # PCAPNG blocks, nanosecond timing & CLI integration tests
-    ├── ja4_test.rs                # JA4/JA4S, QUIC Initial & GREASE immunity integration tests
-    ├── quic_test.rs               # RFC 9001 HKDF, AES-GCM & QUIC Initial decrypt tests
-    ├── ssh_hassh_test.rs          # SSH banner, KEXINIT & Salesforce HASSH tests
-    ├── tcp_stream_test.rs         # TCP stream reassembly & multi-segment TLS tests
-    ├── http_inspect_test.rs       # HTTP/1.1, HTTP/2 frames & JA4H integration tests
-    ├── tls_cert_test.rs           # ServerHello JA3S, X.509 ASN.1 DER & anomaly integration tests
-    └── dns_audit_test.rs          # DNS compression loop & covert tunnel integration tests
+    ├── arp_audit_test.rs          # Pengujian integrasi spoofing ARP, ketidakstabilan gateway, dan banjir ARP
+    ├── p0f_test.rs                # Pengujian sidik jari pasif OS melalui TCP SYN dan FoxIO JA4T
+    ├── icmp_tunnel_test.rs        # Pengujian integrasi terowongan tersembunyi ICMP dan entropi Shannon
+    ├── beacon_test.rs             # Pengujian analisis variasi suar C2, spektrogram, dan klasifikasi
+    ├── filter_test.rs             # Pengujian evaluasi ekspresi penyaring paket bergaya BPF
+    ├── pcap_tls_test.rs           # Pengujian integrasi PCAP, L2-L4, penyaringan GREASE, dan JA3
+    ├── pcapng_test.rs             # Pengujian blok PCAPNG, stempel waktu nanodetik, dan perintah CLI
+    ├── ja4_test.rs                # Pengujian sidik jari JA4/JA4S, paket QUIC Initial, dan kekebalan GREASE
+    ├── quic_test.rs               # Pengujian derivasi kunci HKDF RFC 9001, AES-GCM, dan dekripsi QUIC
+    ├── ssh_hassh_test.rs          # Pengujian spanduk SSH, negosiasi KEXINIT, dan Salesforce HASSH
+    ├── tcp_stream_test.rs         # Pengujian perakitan aliran TCP dan muatan data TLS multi-segmen
+    ├── http_inspect_test.rs       # Pengujian bingkai HTTP/1.1, HTTP/2 dan sidik jari JA4H
+    ├── tls_cert_test.rs           # Pengujian ServerHello JA3S, ASN.1 DER X.509, dan deteksi anomali
+    └── dns_audit_test.rs          # Pengujian pertahanan loop kompresi DNS dan deteksi terowongan
 ```
 
-See [ROADMAP.md](../../ROADMAP.md) for planned transport and protocol forensics capabilities.
+Konsultasikan [ROADMAP.md](../../ROADMAP.md) untuk melihat kapabilitas forensik jaringan dan protokol yang direncanakan.
 
 </details>
 
 ---
 
-## 🔒 Keamanan Memori dan Penguatan Parser
+## 🔒 Keamanan Memori dan Ketahanan Pengurai
 
 <details open>
-<summary><b>🔒 Keamanan Memori dan Penguatan Parser</b></summary>
+<summary><b>🔒 Keamanan Memori dan Ketahanan Pengurai</b></summary>
 <br>
 
-- **100% Safe Rust**: Zero `unsafe` blocks across all binary frame decoders.
-- **RFC 1035 Compression Loop Defense**: DNS name decompression enforces a strict 32-hop pointer ceiling and forward/self-pointer rejection.
-- **Transient Buffer Zeroization**: Ephemeral TLS random, session ID, and reassembly byte buffers are wiped on drop via `zeroize`.
-- **DoS-Resistant Segment Buffering**: Out-of-order TCP segment queuing enforces bounded per-stream memory quotas to prevent memory exhaustion from fragmented segment floods.
-- **Policy & Vulnerability Reporting**: Refer to [SECURITY.md](../../SECURITY.md).
+- **100% Rust Aman**: Nol blok `unsafe` di seluruh modul pendekodean bingkai biner.
+- **Pertahanan Loop Kompresi RFC 1035**: Dekompresi nama DNS memberlakukan batas ketat maksimum 32 lompatan penunjuk dan langsung menolak penunjuk maju atau referensi diri.
+- **Pembersihan Aman Buffer Sensitif**: Buffer sementara berisi data acak TLS, ID sesi, dan byte perakitan ulang dihapus secara aman saat dibatalkan melalui `zeroize`.
+- **Penyanggaan Segmen Tahan Serangan DoS**: Antrean segmen TCP yang tidak berurutan menerapkan kuota memori tetap per aliran untuk mencegah kehabisan sumber daya akibat banjir fragmen.
+- **Kebijakan Keamanan dan Pelaporan Kerentanan**: Lihat [SECURITY.md](../../SECURITY.md).
 
 </details>
 
